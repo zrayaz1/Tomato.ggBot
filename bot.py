@@ -148,8 +148,8 @@ class Stats:
 
     def get_default_stats(self):
 
-        dataList = {"**overall**": self.overallStats, "**24h**": self.recent24hr, "**7 days**": self.recent7days,
-                    '**30 days**': self.recent30days, '**60 Days**': self.recent60days, '**1000 Battles**': self.recent1000}
+        dataList = {"overall": self.overallStats, "24h": self.recent24hr, "7 days": self.recent7days,
+                    '30 days': self.recent30days, '60 Days': self.recent60days, '1000 Battles': self.recent1000}
         startTitleStr = f"{self.userName.capitalize()}'s Stats"
         if self.isInClan:
             offset = 40 - len(startTitleStr)
@@ -172,7 +172,7 @@ class Stats:
                 total_wins = self.jsonOutput["overall"]['wins']
                 winrate = int(total_wins) / int(total_battles)
                 winRatePercent = "{:.1%}".format(winrate)
-                testEmbed.add_field(name=x,
+                testEmbed.add_field(name=f"**{x}**",
                                     value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
                                     inline=True)
             else:
