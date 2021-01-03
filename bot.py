@@ -1,8 +1,7 @@
 import requests
 from discord.ext import commands
 from discord import *
-from dotenv import load_dotenv
-import os
+
 
 load_dotenv('.env')
 client = commands.Bot(command_prefix='$')
@@ -19,7 +18,7 @@ colorRatingNew = {
     "super_unicum": 0x8225ad
 }
 
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
 
 
 def get_wn8_color(wn8: int, tier: float):
@@ -160,7 +159,7 @@ class Stats:
 
 @client.command(alais='stat')
 async def stats(ctx, *args: str):
-    apiKey = os.getenv('WOT_API_KEY')
+    apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
 
