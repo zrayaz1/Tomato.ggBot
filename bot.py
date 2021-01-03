@@ -70,9 +70,14 @@ def get_short_hand(position):
 
 class Stats:
     def __init__(self, userId: str, server: str, name: str,wotApiKey: str):
+
         self.clanApiUrl = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wotApiKey}&account_id={userId}'
         self.apiKey = wotApiKey
         self.server = server
+        if self.server == 'com':
+            self.parsedServer ='NA'
+        else:
+            self.parsedServer = self.server
         self.userName = name
         self.sealClubber = False
         apiUrl = 'https://tomatobackend-oswt3.ondigitalocean.app/api/abcd/{}/{}'
@@ -116,11 +121,16 @@ class Stats:
                     self.threeMarks += 1
                     if tank['tier'] == 10:
                         self.tier10ThreeMarks += 1
+
         clanData = requests.get(self.clanApiUrl).json()['data']
-        self.clanName = clanData[str(self.userId)]['clan']['tag']
-        self.clanIconUrl = clanData[str(self.userId)]['clan']['emblems']['x195']['portal']
-        self.clanPosition = clanData[str(self.userId)]['role']
-        self.shortClanPosition = get_short_hand(self.clanPosition)
+        if clanData[str(self.userId)] is None:
+            self.isInClan = False
+        else:
+            self.isInClan = True
+            self.clanName = clanData[str(self.userId)]['clan']['tag']
+            self.clanIconUrl = clanData[str(self.userId)]['clan']['emblems']['x195']['portal']
+            self.clanPosition = clanData[str(self.userId)]['role']
+            self.shortClanPosition = get_short_hand(self.clanPosition)
     def get_marks(self):
         embed = Embed(title=f"{self.userName}'s Marks", color=self.recent1000Color)
         embed.add_field(name='Total Marks',
@@ -136,10 +146,14 @@ class Stats:
         dataList = {"overall": self.overallStats, "24h": self.recent24hr, "7 days": self.recent7days,
                     '30 days': self.recent30days, '60 Days': self.recent60days, '1000 Battles': self.recent1000}
         startTitleStr = f"{self.userName.capitalize()}'s Stats"
-        offset = 40 - len(startTitleStr)
-        fullStr = startTitleStr + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
-        testEmbed = Embed(title=fullStr,
-                          color=self.recent1000Color)
+        if self.isInClan:
+            offset = 40 - len(startTitleStr)
+            fullStr = startTitleStr + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
+            testEmbed = Embed(title=fullStr,
+                              color=self.recent1000Color,url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+            testEmbed.set_thumbnail(url=self.clanIconUrl)
+        else:
+            testEmbed = Embed(title=startTitleStr,color=self.recent1000Color,url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
         for x in list(dataList.keys()):
             values = list(dict(list(dataList[x].items())[0:4]).values())
             if x == 'overall':
@@ -153,7 +167,7 @@ class Stats:
                                     value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nAvgTier: `{str(values[2])[0:3]}`')
         testEmbed.set_footer(text='Powered by Tomato.gg',
                              icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
-        testEmbed.set_thumbnail(url=self.clanIconUrl)
+
         return testEmbed
 
 
