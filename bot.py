@@ -194,7 +194,7 @@ class Stats:
 
 @client.command(alais='stat')
 async def stats(ctx, *args: str):
-    print("Stats Called: "+args+str(ctx.message.author.name)+ctx.message.server)
+    print("Stats Called: "+str(args)+str(ctx.message.author.name)+ctx.message.server)
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
