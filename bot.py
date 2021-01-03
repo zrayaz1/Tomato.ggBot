@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import *
 
 
-load_dotenv('.env')
+
 client = commands.Bot(command_prefix='$')
 colorRatingNew = {
     "very_bad": 0xBAAAAD,
