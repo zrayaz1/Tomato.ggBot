@@ -148,8 +148,8 @@ class Stats:
 
     def get_default_stats(self):
 
-        dataList = {"overall": self.overallStats, "24h": self.recent24hr, "7 days": self.recent7days,
-                    '30 days': self.recent30days, '60 Days': self.recent60days, '1000 Battles': self.recent1000}
+        dataList = {"**overall**": self.overallStats, "**24h**": self.recent24hr, "**7 days**": self.recent7days,
+                    '**30 days**': self.recent30days, '**60 Days**': self.recent60days, '**1000 Battles**': self.recent1000}
         startTitleStr = f"{self.userName.capitalize()}'s Stats"
         if self.isInClan:
             offset = 40 - len(startTitleStr)
