@@ -19,7 +19,7 @@ colorRatingNew = {
 }
 
 TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
-
+localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
 
 def get_wn8_color(wn8: int, tier: float):
     sealClubber = False
@@ -157,14 +157,24 @@ class Stats:
         for x in list(dataList.keys()):
             values = list(dict(list(dataList[x].items())[0:4]).values())
             if x == 'overall':
-
+                total_battles = self.jsonOutput["overall"]['battles']
+                total_wins = self.jsonOutput["overall"]['wins']
+                winrate = int(total_wins) / int(total_battles)
+                winRatePercent = "{:.1%}".format(winrate)
                 testEmbed.add_field(name=x,
-                                    value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nAvgTier: `{str(values[2])[0:3]}`',
+                                    value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
                                     inline=True)
             else:
+                recentBattles = int(values[0])
+                recentsWins = dataList[x]['wins']
+                if recentBattles != 0:
+                    recentWinRate = recentsWins / recentBattles
+                    recentWinRatePercent = "{:.0%}".format(recentWinRate)
 
+                else:
+                    recentWinRatePercent = '-'
                 testEmbed.add_field(name=x,
-                                    value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nAvgTier: `{str(values[2])[0:3]}`')
+                                    value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
         testEmbed.set_footer(text='Powered by Tomato.gg',
                              icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
 
