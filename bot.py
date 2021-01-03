@@ -162,7 +162,7 @@ class Stats:
 
 
         else:
-            testEmbed = Embed(name=startTitleStr, colour=self.recent1000Color,
+            testEmbed = Embed(title=startTitleStr, colour=self.recent1000Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
 
         for x in list(dataList.keys()):
