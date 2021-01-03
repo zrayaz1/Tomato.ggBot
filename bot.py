@@ -2,8 +2,6 @@ import requests
 from discord.ext import commands
 from discord import *
 
-
-
 client = commands.Bot(command_prefix='$')
 colorRatingNew = {
     "very_bad": 0xBAAAAD,
@@ -20,6 +18,7 @@ colorRatingNew = {
 
 TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
 localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
+
 
 def get_wn8_color(wn8: int, tier: float):
     sealClubber = False
@@ -51,6 +50,8 @@ def get_wn8_color(wn8: int, tier: float):
     else:
         WN8Color = colorRatingNew['very_bad']
     return WN8Color, sealClubber
+
+
 def get_short_hand(position):
     shortPositions = {'executive_officer': 'XO',
                       'commander': 'CDR',
@@ -67,15 +68,14 @@ def get_short_hand(position):
     return shortPositions[position]
 
 
-
 class Stats:
-    def __init__(self, userId: str, server: str, name: str,wotApiKey: str):
+    def __init__(self, userId: str, server: str, name: str, wotApiKey: str):
 
         self.clanApiUrl = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wotApiKey}&account_id={userId}'
         self.apiKey = wotApiKey
         self.server = server
         if self.server == 'com':
-            self.parsedServer ='NA'
+            self.parsedServer = 'NA'
         else:
             self.parsedServer = self.server
         self.userName = name
@@ -131,6 +131,7 @@ class Stats:
             self.clanIconUrl = clanData[str(self.userId)]['clan']['emblems']['x195']['portal']
             self.clanPosition = clanData[str(self.userId)]['role']
             self.shortClanPosition = get_short_hand(self.clanPosition)
+
     def get_marks(self):
         embed = Embed(title=f"{self.userName}'s Marks", color=self.recent1000Color)
         embed.add_field(name='Total Marks',
@@ -139,8 +140,6 @@ class Stats:
                         value=f"3 Marks: `{self.tier10ThreeMarks}`\n2 Marks: `{self.tier10TwoMarks}`\n 1 Marks: `{self.tier10OneMarks}`")
         return embed
 
-
-
     def get_default_stats(self):
 
         dataList = {"overall": self.overallStats, "24h": self.recent24hr, "7 days": self.recent7days,
@@ -148,12 +147,18 @@ class Stats:
         startTitleStr = f"{self.userName.capitalize()}'s Stats"
         if self.isInClan:
             offset = 40 - len(startTitleStr)
-            fullStr = startTitleStr + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
+            fullStr = startTitleStr  # + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
             testEmbed = Embed(title=fullStr,
-                              color=self.recent1000Color,url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+                              description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
+                              color=self.recent1000Color,
+                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
             testEmbed.set_thumbnail(url=self.clanIconUrl)
+
+
         else:
-            testEmbed = Embed(title=startTitleStr,color=self.recent1000Color,url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+            testEmbed = Embed(name=startTitleStr, colour=self.recent1000Color,
+                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+
         for x in list(dataList.keys()):
             values = list(dict(list(dataList[x].items())[0:4]).values())
             if x == 'overall':
@@ -186,7 +191,6 @@ async def stats(ctx, *args: str):
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
-
     sentChannel = ctx.channel
     serverList = ['na', 'eu', 'asia', 'ru']
     if args:
@@ -209,7 +213,7 @@ async def stats(ctx, *args: str):
         else:
             userId = searchForIdJson['data'][0]['account_id']
 
-            userInstance = Stats(userId, userServer, name,apiKey)
+            userInstance = Stats(userId, userServer, name, apiKey)
             if any(item.startswith('--') for item in args):
                 sentFlags = [i for i in args if i.startswith('--')]
                 if '--marks' in sentFlags or '--all' in sentFlags:
