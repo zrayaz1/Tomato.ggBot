@@ -18,7 +18,7 @@ colorRatingNew = {
     "super_unicum": 0x8225ad
 }
 
-TOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
+TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
 
 
 def get_wn8_color(wn8: int, tier: float):
