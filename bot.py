@@ -169,7 +169,7 @@ class Stats:
                 recentsWins = dataList[x]['wins']
                 if recentBattles != 0:
                     recentWinRate = recentsWins / recentBattles
-                    recentWinRatePercent = "{:.0%}".format(recentWinRate)
+                    recentWinRatePercent = "{:.1%}".format(recentWinRate)
 
                 else:
                     recentWinRatePercent = '-'
