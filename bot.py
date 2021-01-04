@@ -203,7 +203,7 @@ class Stats:
         return testEmbed
 
 
-@client.command(alais='stat')
+@client.command(aliases=["stat","Stats",'Stat','ZrayWantsToDie'])
 async def stats(ctx, *args: str):
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
