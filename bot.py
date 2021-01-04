@@ -145,7 +145,7 @@ class Stats:
             self.shortClanPosition = get_short_hand(self.clanPosition)
 
     def get_marks(self):
-        embed = Embed(title=f"{self.userName}'s Marks", color=self.recent1000Color)
+        embed = Embed(title=f"{self.userName}'s Marks", color=self.overallWN8Color)
         embed.add_field(name='Total Marks',
                         value=f"3 Marks: `{self.threeMarks}`\n2 Marks: `{self.twoMarks}`\n 1 Marks: `{self.oneMarks}`")
         embed.add_field(name='Tier 10 Marks',
