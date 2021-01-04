@@ -205,6 +205,7 @@ class Stats:
 
 @client.command(aliases=["stat","Stats",'Stat','ZrayWantsToDie'])
 async def stats(ctx, *args: str):
+    print(str(args)+str(ctx.message.author))
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
@@ -214,8 +215,7 @@ async def stats(ctx, *args: str):
         name = args[0]
         server = [i for i in args if i in serverList]
         if server:
-            print(server)
-            print(server[0])
+
             if server[0] == 'na':
                 userServer = 'com'
             else:
