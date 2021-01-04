@@ -8,18 +8,18 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-client = commands.Bot(command_prefix='$')
+client = commands.Bot(command_prefix='!')
 colorRatingNew = {
-    "very_bad": 0xBAAAAD,
+    "very_bad": 0x7d1930,
     "bad": 0xf11919,
     "below_average": 0xff8a00,
     "average": 0xe6df27,
     "above_average": 0x77e812,
     "good": 0x459300,
     "very_good": 0x2ae4ff,
-    "great": 0x00a0b8,
+    "great": 0x0077ff,
     "unicum": 0xc64cff,
-    "super_unicum": 0x8225ad
+    "super_unicum": 0x7d2ad8
 }
 
 TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
@@ -76,7 +76,10 @@ def get_short_hand(position):
 
 class Stats:
     def __init__(self, userId: str, server: str, name: str, wotApiKey: str):
-
+        if server == 'com':
+            self.defaultTimeOut = 8
+        else:
+            self.defaultTimeOut = 10
         self.clanApiUrl = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wotApiKey}&account_id={userId}'
         self.apiKey = wotApiKey
         self.server = server
@@ -89,7 +92,10 @@ class Stats:
         apiUrl = 'https://tomatobackend-oswt3.ondigitalocean.app/api/abcd/{}/{}'
         self.userId = userId
         self.userUrl = apiUrl.format(server, userId)
-        self.jsonOutput = requests.get(self.userUrl).json()
+
+        self.jsonOutput = requests.get(self.userUrl,timeout=self.defaultTimeOut).json()
+
+
         self.overallStats = self.jsonOutput['overallStats']
         self.tankWN8 = self.overallStats['tankWN8']
         self.recent24hr = self.jsonOutput['recents']['recent24hr']
@@ -156,21 +162,24 @@ class Stats:
             fullStr = startTitleStr  # + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
             testEmbed = Embed(title=fullStr,
                               description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
-                              color=self.recent1000Color,
+                              color=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
             testEmbed.set_thumbnail(url=self.clanIconUrl)
 
 
+
         else:
-            testEmbed = Embed(title=startTitleStr, colour=self.recent1000Color,
+            testEmbed = Embed(title=startTitleStr, colour=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+        if self.sealClubber or self.rSealClubber:
+            testEmbed.set_author(name="🚨WARNING SEALCLUBBER🚨")
 
         for x in list(dataList.keys()):
             values = list(dict(list(dataList[x].items())[0:4]).values())
             if x == 'overall':
-                total_battles = self.jsonOutput["overall"]['battles']
+                self.total_battles = self.jsonOutput["overall"]['battles']
                 total_wins = self.jsonOutput["overall"]['wins']
-                winrate = int(total_wins) / int(total_battles)
+                winrate = int(total_wins) / int(self.total_battles)
                 winRatePercent = "{:.1%}".format(winrate)
                 testEmbed.add_field(name=f"**{x}**",
                                     value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
@@ -188,13 +197,14 @@ class Stats:
                                     value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
         testEmbed.set_footer(text='Powered by Tomato.gg',
                              icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
-
+        if self.recent1000['overallWN8'] != '-':
+            if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <=500:
+                testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
         return testEmbed
 
 
 @client.command(alais='stat')
 async def stats(ctx, *args: str):
-    print("Stats Called: "+str(args)+str(ctx.message.author.name))
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
@@ -219,18 +229,23 @@ async def stats(ctx, *args: str):
             await sentChannel.send("Invalid Username")
         else:
             userId = searchForIdJson['data'][0]['account_id']
-
-            userInstance = Stats(userId, userServer, name, apiKey)
-            if any(item.startswith('--') for item in args):
-                sentFlags = [i for i in args if i.startswith('--')]
-                if '--marks' in sentFlags or '--all' in sentFlags:
+            try:
+                userInstance = Stats(userId, userServer, name, apiKey)
+            except requests.exceptions.Timeout:
+                await sentChannel.send('api timeout: invalid user?')
+                return
+            except Exception:
+                await sentChannel.send('Something borked')
+                return
+            if any(item.startswith('-') for item in args):
+                sentFlags = [i for i in args if i.startswith('-')]
+                if '-marks' in sentFlags or '-all' in sentFlags:
                     embed = userInstance.get_marks()
                     await sentChannel.send(embed=embed)
-            if "--all" in args or not any(item.startswith("--") for item in args):
+            if "-all" in args or not any(item.startswith("-") for item in args):
                 myEmbed = userInstance.get_default_stats()
                 await sentChannel.send(embed=myEmbed)
     else:
-        await sentChannel.send("Usage: $stats [user] [server] --flags")
-
+        await sentChannel.send("Usage: $stats [user] [server] -flags")
 
 client.run(TOKEN)
