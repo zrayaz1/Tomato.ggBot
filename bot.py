@@ -89,7 +89,7 @@ class Stats:
             self.parsedServer = self.server
         self.userName = name
         self.sealClubber = False
-        apiUrl = 'https://tomatobackend.herokuapp.com/api/abcd/{}/{}'
+        apiUrl = 'https://tomatobackend-oswt3.ondigitalocean.app/api/abcd/{}/{}'
         self.userId = userId
         self.userUrl = apiUrl.format(server, userId)
 
