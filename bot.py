@@ -1,16 +1,14 @@
 import requests
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord import *
 import logging
-
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-
-client = commands.Bot(command_prefix='!')
+client = commands.Bot(command_prefix='$')
 colorRatingNew = {
     "very_bad": 0x7d1930,
     "bad": 0xf11919,
@@ -79,7 +77,7 @@ def get_short_hand(position):
 class Stats:
     def __init__(self, userId: str, server: str, name: str, wotApiKey: str):
         if server == 'com':
-            self.defaultTimeOut = 6
+            self.defaultTimeOut = 8
         else:
             self.defaultTimeOut = 20
         self.clanApiUrl = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wotApiKey}&account_id={userId}'
@@ -91,7 +89,7 @@ class Stats:
             self.parsedServer = self.server
         self.userName = name
         self.sealClubber = False
-        apiUrl = 'http://tomatobackend.herokuapp.com/api/abcd/{}/{}'
+        apiUrl = 'https://tomatobackend.herokuapp.com/api/abcd/{}/{}'
         self.userId = userId
         self.userUrl = apiUrl.format(server, userId)
 
@@ -147,7 +145,7 @@ class Stats:
             self.shortClanPosition = get_short_hand(self.clanPosition)
 
     def get_marks(self):
-        embed = Embed(title=f"{self.userName}'s Marks", color=self.recent1000Color)
+        embed = Embed(title=f"{self.userName}'s Marks", color=self.overallWN8Color)
         embed.add_field(name='Total Marks',
                         value=f"3 Marks: `{self.threeMarks}`\n2 Marks: `{self.twoMarks}`\n 1 Marks: `{self.oneMarks}`")
         embed.add_field(name='Tier 10 Marks',
@@ -160,8 +158,8 @@ class Stats:
                     '30 days': self.recent30days, '60 Days': self.recent60days, '1000 Battles': self.recent1000}
         startTitleStr = f"{self.userName.capitalize()}'s Stats"
         if self.isInClan:
-
-            fullStr = startTitleStr
+            offset = 40 - len(startTitleStr)
+            fullStr = startTitleStr  # + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
             testEmbed = Embed(title=fullStr,
                               description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
                               color=self.overallWN8Color,
@@ -206,7 +204,8 @@ class Stats:
 
 
 @client.command(aliases=["stat","Stats",'Stat','ZrayWantsToDie'])
-async def stats(ctx, *args):
+async def stats(ctx, *args: str):
+    print(str(args)+str(ctx.message.author))
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
@@ -216,8 +215,7 @@ async def stats(ctx, *args):
         name = args[0]
         server = [i for i in args if i in serverList]
         if server:
-            print(server)
-            print(server[0])
+
             if server[0] == 'na':
                 userServer = 'com'
             else:
@@ -236,9 +234,9 @@ async def stats(ctx, *args):
             except requests.exceptions.Timeout:
                 await sentChannel.send('api timeout: invalid user?')
                 return
-            # except Exception:
-            #     await sentChannel.send('border')
-            #     return
+            except Exception:
+                await sentChannel.send('Something borked')
+                return
             if any(item.startswith('-') for item in args):
                 sentFlags = [i for i in args if i.startswith('-')]
                 if '-marks' in sentFlags or '-all' in sentFlags:
@@ -249,22 +247,5 @@ async def stats(ctx, *args):
                 await sentChannel.send(embed=myEmbed)
     else:
         await sentChannel.send("Usage: $stats [user] [server] -flags")
-@tasks.loop(hours=10)
-async def get_moe_data():
-    moeApiURl = ''
-
-
-@client.command(aliases=['tankmoe','Moe','tankmarks','TankMarks'])
-async def moe_search(ctx,*args):
-    messageChannel = ctx.channel
-    if args:
-        sentFlags = [i.lower() for i in args if i.startswith("-")]
-
-        correctFlags = [i for i in sentFlags if i.startswith('-tier') or i.startswith('-nation') or i.startswith('-class')]
-        if '-tier' in correctFlags:
-            pass
-        else:
-            messageChannel.send('Missing Required Flag -tier')
-       
 
 client.run(TOKEN)
