@@ -247,5 +247,8 @@ async def stats(ctx, *args: str):
                 await sentChannel.send(embed=myEmbed)
     else:
         await sentChannel.send("Usage: $stats [user] [server] -flags")
-
+@client.command()
+async def thatguy(ctx):
+    channel = ctx.channel
+    await channel.send("No Fun")
 client.run(TOKEN)
