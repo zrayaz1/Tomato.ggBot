@@ -10,6 +10,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 client = commands.Bot(command_prefix='$')
+client.remove_command('help')
 colorRatingNew = {
     "very_bad": 0x7d1930,
     "bad": 0xf11919,
