@@ -26,7 +26,17 @@ colorRatingNew = {
 TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
 localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
 
+@client.event
+async def on_ready():
+    await client.change_presence(activity=discord.Game(name='$help'))
 
+@client.command()
+async def help(ctx):
+    testembed = Embed()
+    testembed.set_footer(text='help')
+
+    testembed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`')
+    await ctx.channel.send(embed=testembed)
 
 
 
