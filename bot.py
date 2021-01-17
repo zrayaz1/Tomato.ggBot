@@ -1,15 +1,17 @@
 import requests
 from discord.ext import commands
 from discord import *
-import logging
 import discord as discord
+import logging
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+from testapi import *
 
-client = commands.Bot(command_prefix='$')
+
+client = commands.Bot(command_prefix='!')
 client.remove_command('help')
 colorRatingNew = {
     "very_bad": 0x7d1930,
@@ -38,9 +40,6 @@ async def help(ctx):
 
     testembed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`')
     await ctx.channel.send(embed=testembed)
-
-
-
 def get_wn8_color(wn8: int, tier: float):
     sealClubber = False
 
@@ -108,7 +107,8 @@ class Stats:
         self.userId = userId
         self.userUrl = apiUrl.format(server, userId)
 
-        self.jsonOutput = requests.get(self.userUrl, timeout=self.defaultTimeOut).json()
+        self.jsonOutput = requests.get(self.userUrl,timeout=self.defaultTimeOut).json()
+
 
         self.overallStats = self.jsonOutput['overallStats']
         self.tankWN8 = self.overallStats['tankWN8']
@@ -212,14 +212,14 @@ class Stats:
         testEmbed.set_footer(text='Powered by Tomato.gg',
                              icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
         if self.recent1000['overallWN8'] != '-':
-            if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <= 500:
+            if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <=500:
                 testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
         return testEmbed
 
 
-@client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
+@client.command(aliases=["stat","Stats",'Stat','ZrayWantsToDie'])
 async def stats(ctx, *args: str):
-    print(str(args) + str(ctx.message.author))
+
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
@@ -260,13 +260,6 @@ async def stats(ctx, *args: str):
                 myEmbed = userInstance.get_default_stats()
                 await sentChannel.send(embed=myEmbed)
     else:
+
         await sentChannel.send("Usage: $stats [user] [server] -flags")
-
-
-@client.command()
-async def thatguy(ctx):
-    channel = ctx.channel
-    await channel.send("No Fun")
-
-
 client.run(TOKEN)
