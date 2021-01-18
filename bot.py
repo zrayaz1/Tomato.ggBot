@@ -3,13 +3,13 @@ from discord.ext import commands
 from discord import *
 import discord as discord
 import logging
+
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 from testapi import *
-
 
 client = commands.Bot(command_prefix='$')
 client.remove_command('help')
@@ -30,7 +30,7 @@ TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
 localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
 
 
-class BotError(Exception):
+class botError(Exception):
     pass
 
 
@@ -326,7 +326,7 @@ class TankData:
         if tank in nameList:
             print(tank)
         else:
-            raise BotError
+            raise botError
 
 
 @client.command(aliases=['tankstats', 'tanks', 'Tank'])
@@ -334,5 +334,8 @@ async def tank(ctx, *args):
     if args:
         try:
             userTank = TankData(args[0])
-        except BotError:
+        except botError:
             await ctx.channel.send('Invalid Tank Name')
+
+
+client.run(TOKEN)
