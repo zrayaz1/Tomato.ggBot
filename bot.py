@@ -29,9 +29,15 @@ colorRatingNew = {
 TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
 localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
 
+
+class BotError(Exception):
+    pass
+
+
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game(name='$help'))
+
 
 @client.command()
 async def help(ctx):
@@ -40,6 +46,8 @@ async def help(ctx):
 
     testembed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`')
     await ctx.channel.send(embed=testembed)
+
+
 def get_wn8_color(wn8: int, tier: float):
     sealClubber = False
 
@@ -107,8 +115,7 @@ class Stats:
         self.userId = userId
         self.userUrl = apiUrl.format(server, userId)
 
-        self.jsonOutput = requests.get(self.userUrl,timeout=self.defaultTimeOut).json()
-
+        self.jsonOutput = requests.get(self.userUrl, timeout=self.defaultTimeOut).json()
 
         self.overallStats = self.jsonOutput['overallStats']
         self.tankWN8 = self.overallStats['tankWN8']
@@ -212,54 +219,120 @@ class Stats:
         testEmbed.set_footer(text='Powered by Tomato.gg',
                              icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
         if self.recent1000['overallWN8'] != '-':
-            if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <=500:
+            if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <= 500:
                 testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
         return testEmbed
 
 
-@client.command(aliases=["stat","Stats",'Stat','ZrayWantsToDie'])
-async def stats(ctx, *args: str):
-
+@client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
+async def stats(ctx, *args):
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
     sentChannel = ctx.channel
     serverList = ['na', 'eu', 'asia', 'ru']
+
+    def find_server(username):
+
+        searchNA = requests.get(apiUrl.format('com', apiKey, username)).json()
+
+        if searchNA['status'] != "error" and searchNA['meta']['count'] != 0:
+            userId = searchNA['data'][0]['account_id']
+
+            return userId, 'com'
+        else:
+
+            searchEU = requests.get(apiUrl.format('eu', apiKey, username)).json()
+
+            if searchEU['status'] != "error" and searchEU['meta']['count'] != 0:
+                userId = searchEU['data'][0]['account_id']
+
+                return userId, 'eu'
+            else:
+
+                searchASIA = requests.get(apiUrl.format('asia', apiKey, username)).json()
+                if searchASIA['status'] != "error" and searchASIA['meta']['count'] != 0:
+                    userId = searchASIA['data'][0]['account_id']
+                    return userId, 'asia'
+                else:
+
+                    searchRU = requests.get(apiUrl.format('ru', apiKey, username)).json()
+                    if searchRU['status'] != "error" and searchRU['meta']['count'] != 0:
+                        userId = searchRU['data'][0]['account_id']
+                        return userId, 'ru'
+                    else:
+                        raise Exception
+
     if args:
         name = args[0]
         server = [i for i in args if i in serverList]
         if server:
-
+            serverPassed = True
             if server[0] == 'na':
                 userServer = 'com'
             else:
                 userServer = server[0]
         else:
-            userServer = 'com'
+            serverPassed = False
 
-        searchForIdJson = requests.get(apiUrl.format(userServer, apiKey, name)).json()
-
-        if searchForIdJson['status'] == "error" or searchForIdJson['meta']['count'] == 0:
-            await sentChannel.send("Invalid Username")
+        if serverPassed:
+            searchForIdJson = requests.get(apiUrl.format(userServer, apiKey, name)).json()
+            if searchForIdJson['status'] == "error" or searchForIdJson['meta']['count'] == 0:
+                await ctx.channel.send('Invalid Username1')
+            else:
+                userId = searchForIdJson['data'][0]['account_id']
         else:
-            userId = searchForIdJson['data'][0]['account_id']
             try:
-                userInstance = Stats(userId, userServer, name, apiKey)
-            except requests.exceptions.Timeout:
-                await sentChannel.send('api timeout: invalid user?')
-                return
+                userId, userServer = find_server(name)
+
             except Exception:
-                await sentChannel.send('Something borked')
+                await sentChannel.send('Invalid Username (All servers)')
                 return
-            if any(item.startswith('-') for item in args):
-                sentFlags = [i for i in args if i.startswith('-')]
-                if '-marks' in sentFlags or '-all' in sentFlags:
-                    embed = userInstance.get_marks()
-                    await sentChannel.send(embed=embed)
-            if "-all" in args or not any(item.startswith("-") for item in args):
-                myEmbed = userInstance.get_default_stats()
-                await sentChannel.send(embed=myEmbed)
+
+        try:
+
+            userInstance = Stats(userId, userServer, name, apiKey)
+        except requests.exceptions.Timeout:
+            await sentChannel.send('api timeout: invalid user?')
+            return
+        except Exception:
+            await sentChannel.send('UwU sumthwing bworke UwU')
+
+        if any(item.startswith('-') for item in args):
+            sentFlags = [i for i in args if i.startswith('-')]
+            if '-marks' in sentFlags or '-all' in sentFlags:
+                embed = userInstance.get_marks()
+                await sentChannel.send(embed=embed)
+        if "-all" in args or not any(item.startswith("-") for item in args):
+            myEmbed = userInstance.get_default_stats()
+            await sentChannel.send(embed=myEmbed)
     else:
 
         await sentChannel.send("Usage: $stats [user] [server] -flags")
-client.run(TOKEN)
+
+
+class TankData:
+    def __init__(self, tank, *args):
+        with open("tanks.txt", 'r') as testFile:
+            data = json.load(testFile)
+        nameDict = {}
+        nameList = []
+        for x in data['data']:
+            nameDict[x] = data['data'][x]['short_name']
+            nameList.append(data['data'][x]['short_name'])
+        reverseNameDict = {v: k for k, v in nameDict.items()}
+        self.tank = tank
+        self.args = args
+        if tank in nameList:
+            print(tank)
+        else:
+            raise BotError
+
+
+@client.command(aliases=['tankstats', 'tanks', 'Tank'])
+async def tank(ctx, *args):
+    if args:
+        try:
+            userTank = TankData(args[0])
+        except BotError:
+            await ctx.channel.send('Invalid Tank Name')

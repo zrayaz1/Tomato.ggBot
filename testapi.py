@@ -14,5 +14,3 @@ def getTankNames(data):
 	reverse = {v: k for k, v in nameDict.items()}
 	return reverse
 
-
-print(getTankNames(getTankData()))
