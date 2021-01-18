@@ -11,7 +11,7 @@ logger.addHandler(handler)
 from testapi import *
 
 
-client = commands.Bot(command_prefix='!')
+client = commands.Bot(command_prefix='$')
 client.remove_command('help')
 colorRatingNew = {
     "very_bad": 0x7d1930,
