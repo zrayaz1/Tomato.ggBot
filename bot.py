@@ -226,6 +226,7 @@ class Stats:
 
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
 async def stats(ctx, *args):
+    print('Stats Called by ' + str(ctx.guild)+" "+str(ctx.message.author)+ f" Called on {args[0]}")
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
@@ -308,7 +309,7 @@ async def stats(ctx, *args):
             await sentChannel.send(embed=myEmbed)
     else:
 
-        await sentChannel.send("Usage: $stats [user] [server] -flags")
+        await sentChannel.send("Usage: $stats [user] -flags")
 
 
 class TankData:
