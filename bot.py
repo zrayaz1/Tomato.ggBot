@@ -161,7 +161,7 @@ class Stats:
         else:
             self.isInClan = True
             self.clanName = clanData[str(self.userId)]['clan']['tag']
-            self.clanIconUrl = clanData[str(self.userId)]['clan']['emblems']['x195']['portal']
+            self.clanIconUrl = clanData[str(self.userId)]['clan']['emblems']['x64']['portal']
             self.clanPosition = clanData[str(self.userId)]['role']
             self.shortClanPosition = get_short_hand(self.clanPosition)
 
