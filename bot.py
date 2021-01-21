@@ -310,8 +310,9 @@ async def stats(ctx, *args):
     else:
 
         await sentChannel.send("Usage: $stats [user] -flags")
-
-
+@client.command()
+async def wotlabs(ctx):
+    await ctx.channel.send(embed=Embed(title='Wotlabs Sucks'))
 class TankData:
     def __init__(self, tank, *args):
         with open("tanks.txt", 'r') as testFile:

@@ -307,7 +307,9 @@ async def stats(ctx, *args):
 
         await sentChannel.send("Usage: $stats [user] [server] -flags")
 
-
+@client.command()
+async def wotlabs(ctx):
+    await ctx.channel.send(embed=Embed(title='Wotlabs Sucks'))
 
 
 
