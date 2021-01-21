@@ -174,7 +174,7 @@ class Stats:
         startTitleStr = f"{self.userName.capitalize()}'s Stats"
         if self.isInClan:
             offset = 40 - len(startTitleStr)
-            fullStr = startTitleStr  # + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
+            fullStr = startTitleStr  # + ' ' * offset + self1.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
             testEmbed = Embed(title=fullStr,
                               description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
                               color=self.overallWN8Color,
