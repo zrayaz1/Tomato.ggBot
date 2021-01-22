@@ -26,8 +26,8 @@ colorRatingNew = {
     "super_unicum": 0x7d2ad8
 }
 
-TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
-localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
+TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.1rqXEp7zGZR-f1jvvFuRH4lKFdE'
+localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.ouaG4EF-nQWxt3ACnrpYHLK0zXI'
 
 
 class botError(Exception):
@@ -221,6 +221,8 @@ class Stats:
         if self.recent1000['overallWN8'] != '-':
             if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <= 500:
                 testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
+        if self.userName == 'lordsheen':
+            testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
         return testEmbed
 
 
