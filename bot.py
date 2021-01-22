@@ -221,6 +221,8 @@ class Stats:
         if self.recent1000['overallWN8'] != '-':
             if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <= 500:
                 testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
+        if self.userName == 'lordsheen':
+            testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
         return testEmbed
 
 
