@@ -217,6 +217,9 @@ class Stats:
         if self.userName == 'lordsheen':
             testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
         return testEmbed
+    def get_tank_stats(self,period):
+        for tank in period['tankstats']['name']
+
 
 
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
