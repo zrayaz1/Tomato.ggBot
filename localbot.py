@@ -2,16 +2,9 @@ import requests
 from discord.ext import commands
 from discord import *
 import discord as discord
-import logging
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
 from testapi import *
 
-
-client = commands.Bot(command_prefix='!')
+client = commands.Bot(command_prefix='$')
 client.remove_command('help')
 colorRatingNew = {
     "very_bad": 0x7d1930,
@@ -26,13 +19,18 @@ colorRatingNew = {
     "super_unicum": 0x7d2ad8
 }
 
-TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.SBmQ2z-jPUZ-5wmAULCumUvjYQg'
-localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.qxs696oJSbqaxbJGtWrnMlnLwgw'
+TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.1rqXEp7zGZR-f1jvvFuRH4lKFdE'
+localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.ouaG4EF-nQWxt3ACnrpYHLK0zXI'
+
+
 class botError(Exception):
     pass
+
+
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game(name='$help'))
+
 
 @client.command()
 async def help(ctx):
@@ -41,6 +39,8 @@ async def help(ctx):
 
     testembed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`')
     await ctx.channel.send(embed=testembed)
+
+
 def get_wn8_color(wn8: int, tier: float):
     sealClubber = False
 
@@ -108,8 +108,7 @@ class Stats:
         self.userId = userId
         self.userUrl = apiUrl.format(server, userId)
 
-        self.jsonOutput = requests.get(self.userUrl,timeout=self.defaultTimeOut).json()
-
+        self.jsonOutput = requests.get(self.userUrl, timeout=self.defaultTimeOut).json()
 
         self.overallStats = self.jsonOutput['overallStats']
         self.tankWN8 = self.overallStats['tankWN8']
@@ -155,7 +154,7 @@ class Stats:
         else:
             self.isInClan = True
             self.clanName = clanData[str(self.userId)]['clan']['tag']
-            self.clanIconUrl = clanData[str(self.userId)]['clan']['emblems']['x195']['portal']
+            self.clanIconUrl = clanData[str(self.userId)]['clan']['emblems']['x64']['portal']
             self.clanPosition = clanData[str(self.userId)]['role']
             self.shortClanPosition = get_short_hand(self.clanPosition)
 
@@ -174,7 +173,7 @@ class Stats:
         startTitleStr = f"{self.userName.capitalize()}'s Stats"
         if self.isInClan:
             offset = 40 - len(startTitleStr)
-            fullStr = startTitleStr  # + ' ' * offset + self1.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
+            fullStr = startTitleStr  # + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
             testEmbed = Embed(title=fullStr,
                               description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
                               color=self.overallWN8Color,
@@ -213,52 +212,53 @@ class Stats:
         testEmbed.set_footer(text='Powered by Tomato.gg',
                              icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
         if self.recent1000['overallWN8'] != '-':
-            if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <=500:
+            if int(self.total_battles) >= 8000 and int(self.recent1000['overallWN8']) <= 500:
                 testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
+        if self.userName == 'lordsheen':
+            testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
         return testEmbed
 
 
-@client.command(aliases=["stat","Stats",'Stat','ZrayWantsToDie'])
+@client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
 async def stats(ctx, *args):
-
+    print('Stats Called by ' + str(ctx.guild)+" "+str(ctx.message.author)+ f" Called on {args[0]}")
     apiKey = '20e1e0e4254d98635796fc71f2dfe741'
     apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
     sentChannel = ctx.channel
     serverList = ['na', 'eu', 'asia', 'ru']
+
     def find_server(username):
-        
-        searchNA = requests.get(apiUrl.format('com',apiKey,username)).json()
-        
+
+        searchNA = requests.get(apiUrl.format('com', apiKey, username)).json()
+
         if searchNA['status'] != "error" and searchNA['meta']['count'] != 0:
             userId = searchNA['data'][0]['account_id']
-            
+
             return userId, 'com'
         else:
-            
-            searchEU = requests.get(apiUrl.format('eu',apiKey,username)).json()
-           
+
+            searchEU = requests.get(apiUrl.format('eu', apiKey, username)).json()
+
             if searchEU['status'] != "error" and searchEU['meta']['count'] != 0:
                 userId = searchEU['data'][0]['account_id']
 
                 return userId, 'eu'
             else:
 
-        
-                searchASIA = requests.get(apiUrl.format('asia',apiKey,username)).json()
+                searchASIA = requests.get(apiUrl.format('asia', apiKey, username)).json()
                 if searchASIA['status'] != "error" and searchASIA['meta']['count'] != 0:
                     userId = searchASIA['data'][0]['account_id']
                     return userId, 'asia'
                 else:
 
-                    searchRU = requests.get(apiUrl.format('ru',apiKey,username)).json()
+                    searchRU = requests.get(apiUrl.format('ru', apiKey, username)).json()
                     if searchRU['status'] != "error" and searchRU['meta']['count'] != 0:
                         userId = searchRU['data'][0]['account_id']
                         return userId, 'ru'
                     else:
                         raise Exception
-        
-        
+
     if args:
         name = args[0]
         server = [i for i in args if i in serverList]
@@ -270,7 +270,6 @@ async def stats(ctx, *args):
                 userServer = server[0]
         else:
             serverPassed = False
-        
 
         if serverPassed:
             searchForIdJson = requests.get(apiUrl.format(userServer, apiKey, name)).json()
@@ -287,7 +286,7 @@ async def stats(ctx, *args):
                 return
 
         try:
-            
+
             userInstance = Stats(userId, userServer, name, apiKey)
         except requests.exceptions.Timeout:
             await sentChannel.send('api timeout: invalid user?')
@@ -305,17 +304,13 @@ async def stats(ctx, *args):
             await sentChannel.send(embed=myEmbed)
     else:
 
-        await sentChannel.send("Usage: $stats [user] [server] -flags")
-
+        await sentChannel.send("Usage: $stats [user] -flags")
 @client.command()
 async def wotlabs(ctx):
     await ctx.channel.send(embed=Embed(title='Wotlabs Sucks'))
-
-
-
 class TankData:
-    def __init__(self,tank,*args):
-        with open("tanks.txt",'r') as testFile:
+    def __init__(self, tank, *args):
+        with open("tanks.txt", 'r') as testFile:
             data = json.load(testFile)
         nameDict = {}
         nameList = []
@@ -324,13 +319,14 @@ class TankData:
             nameList.append(data['data'][x]['short_name'])
         reverseNameDict = {v: k for k, v in nameDict.items()}
         self.tank = tank
-        self.args = args  
+        self.args = args
         if tank in nameList:
             print(tank)
         else:
             raise botError
 
-@client.command(aliases=['tankstats','tanks','Tank'])
+
+@client.command(aliases=['tankstats', 'tanks', 'Tank'])
 async def tank(ctx, *args):
     if args:
         try:
