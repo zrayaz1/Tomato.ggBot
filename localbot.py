@@ -226,7 +226,7 @@ class Stats:
     
 
         for tank in topSix:
-            tankEmbed.add_field(name=tank['name'],value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`")
+            tankEmbed.add_field(name=tank['name'],value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
         return tankEmbed
 
 
