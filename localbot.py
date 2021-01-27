@@ -4,7 +4,7 @@ from discord import *
 import discord as discord
 from testapi import *
 
-client = commands.Bot(command_prefix='$')
+client = commands.Bot(command_prefix='!')
 client.remove_command('help')
 colorRatingNew = {
     "very_bad": 0x7d1930,
@@ -41,19 +41,17 @@ async def help(ctx):
     await ctx.channel.send(embed=testembed)
 
 
-def get_wn8_color(wn8: int, tier: float):
-    sealClubber = False
+def get_wn8_color(wn8: int):
+    
 
-    tier = float(tier)
+    
     if wn8 >= 2900:
         WN8Color = colorRatingNew['super_unicum']
-        if tier <= 7:
-            sealClubber = True
+        
 
     elif wn8 >= 2450:
         WN8Color = colorRatingNew['unicum']
-        if tier <= 7:
-            sealClubber = True
+       
     elif wn8 >= 2000:
         WN8Color = colorRatingNew['great']
     elif wn8 >= 1600:
@@ -70,7 +68,7 @@ def get_wn8_color(wn8: int, tier: float):
         WN8Color = colorRatingNew['bad']
     else:
         WN8Color = colorRatingNew['very_bad']
-    return WN8Color, sealClubber
+    return WN8Color
 
 
 def get_short_hand(position):
@@ -120,13 +118,7 @@ class Stats:
         self.recent1000 = self.jsonOutput['recents']['recent1000']
         self.overallWN8 = self.overallStats['overallWN8']
         self.clanId = ''
-        self.overallWN8Color, self.sealClubber = get_wn8_color(self.overallWN8, self.overallStats['avgTier'])
-        if self.recent1000['overallWN8'] != '-' and self.recent1000['tier'] != '-':
-            self.recent1000Color, self.rSealClubber = get_wn8_color(self.recent1000['overallWN8'],
-                                                                    self.recent1000['tier'])
-        else:
-            self.recent1000Color = self.overallWN8Color
-            self.rSealClubber = self.sealClubber
+        self.overallWN8Color = get_wn8_color(self.overallWN8)
         self.oneMarks = 0
         self.twoMarks = 0
         self.threeMarks = 0
@@ -147,7 +139,7 @@ class Stats:
                     self.threeMarks += 1
                     if tank['tier'] == 10:
                         self.tier10ThreeMarks += 1
-
+        self.startTitleStr = f"{self.userName.capitalize()}'s Stats"               
         clanData = requests.get(self.clanApiUrl).json()['data']
         if clanData[str(self.userId)] is None:
             self.isInClan = False
@@ -170,11 +162,11 @@ class Stats:
 
         dataList = {"overall": self.overallStats, "24h": self.recent24hr, "7 days": self.recent7days,
                     '30 days': self.recent30days, '60 Days': self.recent60days, '1000 Battles': self.recent1000}
-        startTitleStr = f"{self.userName.capitalize()}'s Stats"
+        self.startTitleStr = f"{self.userName.capitalize()}'s Stats"
         if self.isInClan:
-            offset = 40 - len(startTitleStr)
-            fullStr = startTitleStr  # + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
-            testEmbed = Embed(title=fullStr,
+            
+              # + ' ' * offset + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]"
+            testEmbed = Embed(title=self.startTitleStr,
                               description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
                               color=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
@@ -183,9 +175,9 @@ class Stats:
 
 
         else:
-            testEmbed = Embed(title=startTitleStr, colour=self.overallWN8Color,
+            testEmbed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
-        if self.sealClubber or self.rSealClubber:
+        if self.sealClubber:
             testEmbed.set_author(name="🚨WARNING SEALCLUBBER🚨")
 
         for x in list(dataList.keys()):
@@ -218,8 +210,24 @@ class Stats:
             testEmbed.set_author(name="🚨WARNING DOGSHIT🚨")
         return testEmbed
     def get_tank_stats(self,period):
-        for tank in period['tankstats']['name']
+        dataList = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
+                    '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
+        if period.upper() in list(dataList.keys()):
+            data = dataList[period.upper()]
+            if period.upper() != "OVERALL":
+                SortedTankData = sorted(data['tankStats'],key=lambda item: item['battles'],reverse=True)
+            else: 
+                return Embed(title='Soon')
+        topSix = SortedTankData[0:6]
+        tankEmbed = Embed(title=self.startTitleStr,
+                              description=f"**Last {period} Stats**",
+                              color = get_wn8_color(data['overallWN8']),
+                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+    
 
+        for tank in topSix:
+            tankEmbed.add_field(name=tank['name'],value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`")
+        return tankEmbed
 
 
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
@@ -263,8 +271,10 @@ async def stats(ctx, *args):
                         raise Exception
 
     if args:
+        timePeriods = ["OVERALL","24H","7DAYS",'30DAYS','60DAYS','1000BATTLES']
         name = args[0]
         server = [i for i in args if i in serverList]
+        time = [i for i in args if i.upper() in timePeriods]
         if server:
             serverPassed = True
             if server[0] == 'na':
@@ -302,8 +312,13 @@ async def stats(ctx, *args):
             if '-marks' in sentFlags or '-all' in sentFlags:
                 embed = userInstance.get_marks()
                 await sentChannel.send(embed=embed)
+        if time:
+            time = time[0]
+            await sentChannel.send(embed=userInstance.get_tank_stats(time))
+            return
         if "-all" in args or not any(item.startswith("-") for item in args):
             myEmbed = userInstance.get_default_stats()
+            
             await sentChannel.send(embed=myEmbed)
     else:
 
@@ -311,6 +326,9 @@ async def stats(ctx, *args):
 @client.command()
 async def wotlabs(ctx):
     await ctx.channel.send(embed=Embed(title='Wotlabs Sucks'))
+
+
+
 class TankData:
     def __init__(self, tank, *args):
         with open("tanks.txt", 'r') as testFile:
