@@ -355,6 +355,9 @@ async def tank(ctx, *args):
             userTank = TankData(args[0])
         except botError:
             await ctx.channel.send('Invalid Tank Name')
+@client.command()
+async def ROPE(ctx):
+    await ctx.channel.send(embed=Embed().set_image(url="https://hg1.funnyjunk.com/thumbnails/comments/Login+to+view+this+comment+_d8e247603b6ccfb6ec7775c925972b2b.png"))
 
 
 client.run(TOKEN)
