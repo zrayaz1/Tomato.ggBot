@@ -56,11 +56,11 @@ def update_mark_data():
 def update_vehicles_icons():
     global na_image_api, eu_image_api, asia_image_api
     na_image_api = requests.get(
-        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
+        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
     eu_image_api = requests.get(
-        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
+        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
     asia_image_api = requests.get(
-        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
+        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
 
 
 @client.event
@@ -377,7 +377,7 @@ class TankData:
         self.moeEmbed = Embed(title=f"{self.tank} {self.server_name.upper()}")
 
     def get_moe_embed(self):
-        self.moeEmbed.add_field(name='Marks(Dmg+track/assist)',
+        self.moeEmbed.add_field(name='Marks(Dmg + Track/Spot)',
                                 value=f"1 Mark: `{self.markData['65']}`\n2 Mark: `{self.markData['85']}`\n3 Mark: `{self.markData['95']}`\n100% MoE: `{self.markData['100']}`")
         self.moeEmbed.add_field(name='Mastery(XP)',
                                 value=f"3st Class: `{self.masteryData[0]}`\n2st Class: `{self.masteryData[1]}`\n1st Class: `{self.masteryData[2]}`\nMastery: `{self.masteryData[3]}`")
