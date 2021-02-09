@@ -33,7 +33,14 @@ class BotError(Exception):
 def get_tank_list(server='com'):
     server_to_data = {'com': na_image_api, 'eu': eu_image_api, 'asia': asia_image_api}
     tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data']]
-    return tank_list
+    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data']]
+
+    short_and_long_list = tank_list + short_name_list
+
+    short_to_long_dict = {}
+    for x in server_to_data[server]['data']:
+        short_to_long_dict[server_to_data[server]['data'][x]['short_name']] = server_to_data[server]['data'][x]['name']
+    return tank_list, short_name_list, short_and_long_list, short_to_long_dict
 
 
 def update_mark_data():
@@ -49,11 +56,11 @@ def update_mark_data():
 def update_vehicles_icons():
     global na_image_api, eu_image_api, asia_image_api
     na_image_api = requests.get(
-        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
+        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
     eu_image_api = requests.get(
-        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
+        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
     asia_image_api = requests.get(
-        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
+        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
 
 
 @client.event
@@ -363,7 +370,11 @@ class TankData:
                 for tank in self.data[2]["data"]:
                     if tank['id'] == int(self.tankId):
                         self.masteryData = tank['mastery']
-        self.moeEmbed = Embed(title=f"{self.tank} Marks")
+        if self.server == 'com':
+            self.server_name = 'na'
+        else:
+            self.server_name = self.server
+        self.moeEmbed = Embed(title=f"{self.tank} {self.server_name.upper()}")
 
     def get_moe_embed(self):
         self.moeEmbed.add_field(name='Marks',
@@ -392,10 +403,14 @@ async def marks(ctx, *args):
             if x not in server_list:
                 name_str += str(x)
 
-        tank_list = get_tank_list(user_server)
-        tank_guess = process.extractOne(str(name_str), list(tank_list))
+        tank_list, short_tank_list ,short_and_long_list, short_to_long_dict = get_tank_list(user_server)
+        tank_guess = process.extractOne(str(name_str), list(short_and_long_list))
+        if tank_guess[0] in short_tank_list:
+            formatted_tank_guess = short_to_long_dict[tank_guess[0]]
+        else:
+            formatted_tank_guess = tank_guess[0]
         try:
-            user_tank = TankData(tank_guess[0], server=user_server)
+            user_tank = TankData(formatted_tank_guess, server=user_server)
         except BotError:
             await ctx.channel.send('Invalid Tank Name')
             return
