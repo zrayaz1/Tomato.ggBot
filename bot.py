@@ -363,12 +363,16 @@ class TankData:
                 for tank in self.data[2]["data"]:
                     if tank['id'] == int(self.tankId):
                         self.masteryData = tank['mastery']
-        self.moeEmbed = Embed(title=f"{self.tank} Marks")
+        if self.server == 'com':
+            self.server_name = 'na'
+        else:
+            self.server_name = self.server
+        self.moeEmbed = Embed(title=f"{self.tank} {self.server_name.upper()}")
 
     def get_moe_embed(self):
-        self.moeEmbed.add_field(name='Marks',
+        self.moeEmbed.add_field(name='Marks(Dmg+track/assist)',
                                 value=f"1 Mark: `{self.markData['65']}`\n2 Mark: `{self.markData['85']}`\n3 Mark: `{self.markData['95']}`\n100% MoE: `{self.markData['100']}`")
-        self.moeEmbed.add_field(name='Mastery',
+        self.moeEmbed.add_field(name='Mastery(XP)',
                                 value=f"3st Class: `{self.masteryData[0]}`\n2st Class: `{self.masteryData[1]}`\n1st Class: `{self.masteryData[2]}`\nMastery: `{self.masteryData[3]}`")
         url = self.data[0]['data'][self.tankId]['images']['big_icon']
         self.moeEmbed.set_thumbnail(url=url)
