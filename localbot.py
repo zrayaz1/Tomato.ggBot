@@ -1,14 +1,12 @@
-import requests
-from discord.ext import commands
-from discord import *
 import discord as discord
+import requests
+from discord import *
+from discord.ext import commands
+from fuzzywuzzy import process
 
-from fuzzywuzzy import fuzz, process
-apiTankData = {}
-tankMarkData = {}
-tankDataDict = {}
-globalTankList = []
-masteryCall = []
+na_image_api, eu_image_api, asia_image_api = {}, {}, {}
+na_moe_data, eu_moe_data, asia_moe_data = {}, {}, {}
+na_mastery_data, eu_mastery_data, asia_mastery_data = {}, {}, {}
 client = commands.Bot(command_prefix='!')
 client.remove_command('help')
 colorRatingNew = {
@@ -28,89 +26,100 @@ TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.1rqXEp7zGZR-f1jvvFuRH4lKFdE'
 localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.ouaG4EF-nQWxt3ACnrpYHLK0zXI'
 
 
-class botError(Exception):
+class BotError(Exception):
     pass
+
+
+def get_tank_list(server='com'):
+    server_to_data = {'com': na_image_api, 'eu': eu_image_api, 'asia': asia_image_api}
+    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data']]
+    return tank_list
+
+
+def update_mark_data():
+    global na_moe_data, eu_moe_data, asia_moe_data, na_mastery_data, eu_mastery_data, asia_mastery_data
+    na_moe_data = requests.get("https://gunmarks.poliroid.ru/api/com/vehicles/65,85,95,100").json()
+    eu_moe_data = requests.get("https://gunmarks.poliroid.ru/api/eu/vehicles/65,85,95,100").json()
+    asia_moe_data = requests.get("https://gunmarks.poliroid.ru/api/asia/vehicles/65,85,95,100").json()
+    na_mastery_data = requests.get("https://mastery.poliroid.ru/api/com/vehicles").json()
+    eu_mastery_data = requests.get("https://mastery.poliroid.ru/api/eu/vehicles").json()
+    asia_mastery_data = requests.get("https://mastery.poliroid.ru/api/asia/vehicles").json()
+
+
+def update_vehicles_icons():
+    global na_image_api, eu_image_api, asia_image_api
+    na_image_api = requests.get(
+        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
+    eu_image_api = requests.get(
+        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
+    asia_image_api = requests.get(
+        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
 
 
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game(name='$help'))
-    r = requests.get("https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages").json()
-    for x in r["data"]:
-        globalTankList.append(r['data'][x]['name'])
-        tankDataDict[r['data'][x]['name']] = r['data'][x]['images']['big_icon']
-
-    global apiTankData
-    apiTankData = r
-    test = requests.get("https://gunmarks.poliroid.ru/api/com/vehicles/65,85,95,100").json()
-    global tankMarkData
-    tankMarkData = test
-    global masteryCall
-    masteryCall = requests.get("https://mastery.poliroid.ru/api/com/vehicles").json()
-
-
-
+    update_vehicles_icons()
+    update_mark_data()
+    print('updates finished')
 
 @client.command()
 async def help(ctx):
-    testembed = Embed()
-    testembed.set_footer(text='help')
+    test_embed = Embed()
+    test_embed.set_footer(text='help')
 
-    testembed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`')
-    await ctx.channel.send(embed=testembed)
+    test_embed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`')
+    await ctx.channel.send(embed=test_embed)
 
 
 def get_wn8_color(wn8: int):
     if wn8 >= 2900:
-        WN8Color = colorRatingNew['super_unicum']
-
-
+        wn8_color = colorRatingNew['super_unicum']
     elif wn8 >= 2450:
-        WN8Color = colorRatingNew['unicum']
-
+        wn8_color = colorRatingNew['unicum']
     elif wn8 >= 2000:
-        WN8Color = colorRatingNew['great']
+        wn8_color = colorRatingNew['great']
     elif wn8 >= 1600:
-        WN8Color = colorRatingNew['very_good']
+        wn8_color = colorRatingNew['very_good']
     elif wn8 >= 1200:
-        WN8Color = colorRatingNew['good']
+        wn8_color = colorRatingNew['good']
     elif wn8 >= 900:
-        WN8Color = colorRatingNew['above_average']
+        wn8_color = colorRatingNew['above_average']
     elif wn8 >= 650:
-        WN8Color = colorRatingNew['average']
+        wn8_color = colorRatingNew['average']
     elif wn8 >= 450:
-        WN8Color = colorRatingNew['below_average']
+        wn8_color = colorRatingNew['below_average']
     elif wn8 >= 300:
-        WN8Color = colorRatingNew['bad']
+        wn8_color = colorRatingNew['bad']
     else:
-        WN8Color = colorRatingNew['very_bad']
-    return WN8Color
+        wn8_color = colorRatingNew['very_bad']
+    return wn8_color
 
 
 def get_short_hand(position):
-    shortPositions = {'executive_officer': 'XO',
-                      'commander': 'CDR',
-                      'personnel_officer': 'PO',
-                      'combat_officer': 'CO',
-                      'recruitment_officer': 'RO',
-                      'intelligence_officer': 'IO',
-                      'quartermaster': 'QM',
-                      'junior_officer': 'JO',
-                      'private': "PVT",
-                      'recruit': 'RCT',
-                      'reservist': 'RES'
-                      }
-    return shortPositions[position]
+    short_positions = {'executive_officer': 'XO',
+                       'commander': 'CDR',
+                       'personnel_officer': 'PO',
+                       'combat_officer': 'CO',
+                       'recruitment_officer': 'RO',
+                       'intelligence_officer': 'IO',
+                       'quartermaster': 'QM',
+                       'junior_officer': 'JO',
+                       'private': "PVT",
+                       'recruit': 'RCT',
+                       'reservist': 'RES'
+                       }
+    return short_positions[position]
 
 
 class Stats:
-    def __init__(self, userId: str, server: str, name: str, wotApiKey: str):
+    def __init__(self, user_id: str, server: str, name: str, wot_api_key: str):
         if server == 'com':
             self.defaultTimeOut = 8
         else:
             self.defaultTimeOut = 20
-        self.clanApiUrl = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wotApiKey}&account_id={userId}'
-        self.apiKey = wotApiKey
+        self.clanApiUrl = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wot_api_key}&account_id={user_id}'
+        self.apiKey = wot_api_key
         self.server = server
         if self.server == 'com':
             self.parsedServer = 'NA'
@@ -118,9 +127,9 @@ class Stats:
             self.parsedServer = self.server
         self.userName = name
         self.sealClubber = False
-        apiUrl = 'https://tomatobackend.herokuapp.com/api/abcd/{}/{}'
-        self.userId = userId
-        self.userUrl = apiUrl.format(server, userId)
+        api_url = 'https://tomatobackend.herokuapp.com/api/abcd/{}/{}'
+        self.userId = user_id
+        self.userUrl = api_url.format(server, user_id)
 
         self.jsonOutput = requests.get(self.userUrl, timeout=self.defaultTimeOut).json()
 
@@ -156,14 +165,14 @@ class Stats:
                     if tank['tier'] == 10:
                         self.tier10ThreeMarks += 1
         self.startTitleStr = f"{self.userName.capitalize()}'s Stats"
-        clanData = requests.get(self.clanApiUrl).json()['data']
-        if clanData[str(self.userId)] is None:
+        clan_data = requests.get(self.clanApiUrl).json()['data']
+        if clan_data[str(self.userId)] is None:
             self.isInClan = False
         else:
             self.isInClan = True
-            self.clanName = clanData[str(self.userId)]['clan']['tag']
-            self.clanIconUrl = clanData[str(self.userId)]['clan']['emblems']['x64']['portal']
-            self.clanPosition = clanData[str(self.userId)]['role']
+            self.clanName = clan_data[str(self.userId)]['clan']['tag']
+            self.clanIconUrl = clan_data[str(self.userId)]['clan']['emblems']['x64']['portal']
+            self.clanPosition = clan_data[str(self.userId)]['role']
             self.shortClanPosition = get_short_hand(self.clanPosition)
 
     def get_marks(self):
@@ -223,21 +232,21 @@ class Stats:
         return testEmbed
 
     def get_tank_stats(self, period):
-        dataList = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
+        data_list = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
                     '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
-        if period.upper() in list(dataList.keys()):
-            data = dataList[period.upper()]
+        if period.upper() in list(data_list.keys()):
+            data = data_list[period.upper()]
             if period.upper() != "OVERALL":
-                SortedTankData = sorted(data['tankStats'], key=lambda item: item['battles'], reverse=True)
+                sorted_tank_data = sorted(data['tankStats'], key=lambda item: item['battles'], reverse=True)
             else:
                 return Embed(title='Soon')
-        topSix = SortedTankData[0:6]
+        top_six = sorted_tank_data[0:6]
         tankEmbed = Embed(title=self.startTitleStr,
                           description=f"**Last {period} Stats**",
                           color=get_wn8_color(data['overallWN8']),
                           url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
 
-        for tank in topSix:
+        for tank in top_six:
             tankEmbed.add_field(name=tank['name'],
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
         return tankEmbed
@@ -246,90 +255,90 @@ class Stats:
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
 async def stats(ctx, *args):
     print('Stats Called by ' + str(ctx.guild) + " " + str(ctx.message.author) + f" Called on {args[0]}")
-    apiKey = '20e1e0e4254d98635796fc71f2dfe741'
-    apiUrl = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
+    api_key = '20e1e0e4254d98635796fc71f2dfe741'
+    api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
-    sentChannel = ctx.channel
-    serverList = ['na', 'eu', 'asia', 'ru']
+    sent_channel = ctx.channel
+    server_list = ['na', 'eu', 'asia', 'ru']
 
     def find_server(username):
 
-        searchNA = requests.get(apiUrl.format('com', apiKey, username)).json()
+        search_na = requests.get(api_url.format('com', api_key, username)).json()
 
-        if searchNA['status'] != "error" and searchNA['meta']['count'] != 0:
-            userId = searchNA['data'][0]['account_id']
+        if search_na['status'] != "error" and search_na['meta']['count'] != 0:
+            stats_user_id = search_na['data'][0]['account_id']
 
-            return userId, 'com'
+            return stats_user_id, 'com'
         else:
 
-            searchEU = requests.get(apiUrl.format('eu', apiKey, username)).json()
+            search_eu = requests.get(api_url.format('eu', api_key, username)).json()
 
-            if searchEU['status'] != "error" and searchEU['meta']['count'] != 0:
-                userId = searchEU['data'][0]['account_id']
+            if search_eu['status'] != "error" and search_eu['meta']['count'] != 0:
+                stats_user_id = search_eu['data'][0]['account_id']
 
-                return userId, 'eu'
+                return stats_user_id, 'eu'
             else:
 
-                searchASIA = requests.get(apiUrl.format('asia', apiKey, username)).json()
-                if searchASIA['status'] != "error" and searchASIA['meta']['count'] != 0:
-                    userId = searchASIA['data'][0]['account_id']
-                    return userId, 'asia'
+                search_asia = requests.get(api_url.format('asia', api_key, username)).json()
+                if search_asia['status'] != "error" and search_asia['meta']['count'] != 0:
+                    stats_user_id = search_asia['data'][0]['account_id']
+                    return stats_user_id, 'asia'
                 else:
                     raise Exception
 
     if args:
-        timePeriods = ["OVERALL", "24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']
+        time_periods = ["OVERALL", "24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']
         name = args[0]
-        server = [i for i in args if i in serverList]
-        time = [i for i in args if i.upper() in timePeriods]
+        server = [i for i in args if i in server_list]
+        time = [i for i in args if i.upper() in time_periods]
         if server:
-            serverPassed = True
+            server_passed = True
             if server[0] == 'na':
-                userServer = 'com'
+                user_server = 'com'
             else:
-                userServer = server[0]
+                user_server = server[0]
         else:
-            serverPassed = False
+            server_passed = False
 
-        if serverPassed:
-            searchForIdJson = requests.get(apiUrl.format(userServer, apiKey, name)).json()
-            if searchForIdJson['status'] == "error" or searchForIdJson['meta']['count'] == 0:
+        if server_passed:
+            search_for_id_json = requests.get(api_url.format(user_server, api_key, name)).json()
+            if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
                 await ctx.channel.send('Invalid Username1')
             else:
-                userId = searchForIdJson['data'][0]['account_id']
+                user_id = search_for_id_json['data'][0]['account_id']
         else:
             try:
-                userId, userServer = find_server(name)
+                user_id, user_server = find_server(name)
 
             except Exception:
-                await sentChannel.send('Invalid Username (All servers)')
+                await sent_channel.send('Invalid Username (All servers)')
                 return
 
         try:
 
-            userInstance = Stats(userId, userServer, name, apiKey)
+            user_instance = Stats(user_id, user_server, name, api_key)
         except requests.exceptions.Timeout:
-            await sentChannel.send('api timeout: invalid user?')
+            await sent_channel.send('api timeout: invalid user?')
             return
         except Exception:
-            await sentChannel.send('UwU sumthwing bworke UwU')
+            await sent_channel.send('UwU sumthwing bworke UwU')
 
         if any(item.startswith('-') for item in args):
             sentFlags = [i for i in args if i.startswith('-')]
             if '-marks' in sentFlags or '-all' in sentFlags:
-                embed = userInstance.get_marks()
-                await sentChannel.send(embed=embed)
+                embed = user_instance.get_marks()
+                await sent_channel.send(embed=embed)
         if time:
             time = time[0]
-            await sentChannel.send(embed=userInstance.get_tank_stats(time))
+            await sent_channel.send(embed=user_instance.get_tank_stats(time))
             return
         if "-all" in args or not any(item.startswith("-") for item in args):
-            myEmbed = userInstance.get_default_stats()
+            my_embed = user_instance.get_default_stats()
 
-            await sentChannel.send(embed=myEmbed)
+            await sent_channel.send(embed=my_embed)
     else:
 
-        await sentChannel.send("Usage: $stats [user] -flags")
+        await sent_channel.send("Usage: $stats [user] -flags")
 
 
 @client.command()
@@ -338,30 +347,30 @@ async def wotlabs(ctx):
 
 
 class TankData:
-    def __init__(self, senttank, *args):
-        self.tank = senttank
-        self.args = args
-
-        for x in apiTankData['data']:
-
-            if apiTankData['data'][x]['name'] == self.tank:
-
-                self.tankId = x
-                for x in tankMarkData['data']:
+    def __init__(self, sent_tank, server="com"):
+        server_to_data = {'com': [na_image_api, na_moe_data, na_mastery_data],
+                          'eu': [eu_image_api, eu_moe_data, eu_mastery_data],
+                          'asia': [asia_image_api, asia_moe_data, asia_mastery_data]}
+        self.tank = sent_tank
+        self.server = server
+        self.data = server_to_data[self.server]
+        for tank_id in self.data[0]['data']:
+            if self.data[0]['data'][tank_id]['name'] == self.tank:
+                self.tankId = tank_id
+                for x in self.data[1]['data']:
                     if str(x['id']) == str(self.tankId):
-
                         self.markData = x['marks']
+                for tank in self.data[2]["data"]:
+                    if tank['id'] == int(self.tankId):
+                        self.masteryData = tank['mastery']
         self.moeEmbed = Embed(title=f"{self.tank} Marks")
-        for tank in masteryCall['data']:
-            if tank['id'] == int(self.tankId):
-                self.masteryData = tank['mastery']
 
-
-    def getMoeEmbed(self):
-
-        self.moeEmbed.add_field(name='Marks',value=f"1 Mark: `{self.markData['65']}`\n2 Mark: `{self.markData['85']}`\n3 Mark: `{self.markData['95']}`\n100% MoE: `{self.markData['100']}`")
-        self.moeEmbed.add_field(name='Mastery',value=f"3st Class: `{self.masteryData[0]}`\n2st Class: `{self.masteryData[1]}`\n1st Class: `{self.masteryData[2]}`\nMastery: `{self.masteryData[3]}`")
-        url = tankDataDict[self.tank]
+    def get_moe_embed(self):
+        self.moeEmbed.add_field(name='Marks',
+                                value=f"1 Mark: `{self.markData['65']}`\n2 Mark: `{self.markData['85']}`\n3 Mark: `{self.markData['95']}`\n100% MoE: `{self.markData['100']}`")
+        self.moeEmbed.add_field(name='Mastery',
+                                value=f"3st Class: `{self.masteryData[0]}`\n2st Class: `{self.masteryData[1]}`\n1st Class: `{self.masteryData[2]}`\nMastery: `{self.masteryData[3]}`")
+        url = self.data[0]['data'][self.tankId]['images']['big_icon']
         self.moeEmbed.set_thumbnail(url=url)
         return self.moeEmbed
 
@@ -369,17 +378,28 @@ class TankData:
 @client.command(aliases=['tankstats', 'tanks', 'Tank'])
 async def marks(ctx, *args):
     if args:
-        nameStr = ""
+        server_list = ['na', 'eu', 'asia']
+        server = [i for i in args if i in server_list]
+        if server:
+            if server[0] == 'na':
+                user_server = 'com'
+            else:
+                user_server = server[0]
+        else:
+            user_server = 'com'
+        name_str = ""
         for x in args:
-            nameStr += str(x)
+            if x not in server_list:
+                name_str += str(x)
 
-        guessStr = process.extractOne(str(nameStr), globalTankList)
+        tank_list = get_tank_list(user_server)
+        tank_guess = process.extractOne(str(name_str), list(tank_list))
         try:
-            userTank = TankData(guessStr[0])
-        except botError:
+            user_tank = TankData(tank_guess[0], server=user_server)
+        except BotError:
             await ctx.channel.send('Invalid Tank Name')
             return
-        await ctx.channel.send(embed=userTank.getMoeEmbed())
+        await ctx.channel.send(embed=user_tank.get_moe_embed())
 
 
 client.run(localTOKEN)
