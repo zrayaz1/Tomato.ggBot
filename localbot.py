@@ -32,8 +32,8 @@ class BotError(Exception):
 
 def get_tank_list(server='com'):
     server_to_data = {'com': na_image_api, 'eu': eu_image_api, 'asia': asia_image_api}
-    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data']]
-    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data']]
+    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data'] if server_to_data[server]['data'][i]['tier'] >= 5]
+    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data'] if server_to_data[server]['data'][i]['tier'] >= 5]
 
     short_and_long_list = tank_list + short_name_list
 
@@ -56,11 +56,11 @@ def update_mark_data():
 def update_vehicles_icons():
     global na_image_api, eu_image_api, asia_image_api
     na_image_api = requests.get(
-        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
+        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier").json()
     eu_image_api = requests.get(
-        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
+        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier").json()
     asia_image_api = requests.get(
-        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
+        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier").json()
 
 
 @client.event
@@ -69,6 +69,7 @@ async def on_ready():
     update_vehicles_icons()
     update_mark_data()
     print('updates finished')
+
 
 @client.command()
 async def help(ctx):
@@ -181,6 +182,7 @@ class Stats:
             self.clanIconUrl = clan_data[str(self.userId)]['clan']['emblems']['x64']['portal']
             self.clanPosition = clan_data[str(self.userId)]['role']
             self.shortClanPosition = get_short_hand(self.clanPosition)
+        self.total_battles = self.jsonOutput["overall"]['battles']
 
     def get_marks(self):
         embed = Embed(title=f"{self.userName}'s Marks", color=self.overallWN8Color)
@@ -204,29 +206,24 @@ class Stats:
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
             testEmbed.set_thumbnail(url=self.clanIconUrl)
 
-
-
         else:
             testEmbed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
-        if self.sealClubber:
-            testEmbed.set_author(name="🚨WARNING SEALCLUBBER🚨")
 
         for x in list(dataList.keys()):
             values = list(dict(list(dataList[x].items())[0:4]).values())
             if x == 'overall':
-                self.total_battles = self.jsonOutput["overall"]['battles']
                 total_wins = self.jsonOutput["overall"]['wins']
-                winrate = int(total_wins) / int(self.total_battles)
-                winRatePercent = "{:.1%}".format(winrate)
+                win_rate = int(total_wins) / int(self.total_battles)
+                win_rate_percent = "{:.1%}".format(win_rate)
                 testEmbed.add_field(name=f"**{x}**",
-                                    value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
+                                    value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{win_rate_percent}`\nAvgTier: `{str(values[2])[0:3]}`',
                                     inline=True)
             else:
-                recentBattles = int(values[0])
-                recentsWins = dataList[x]['wins']
-                if recentBattles != 0:
-                    recentWinRate = recentsWins / recentBattles
+                recent_battles = int(values[0])
+                recents_wins = dataList[x]['wins']
+                if recent_battles != 0:
+                    recentWinRate = recents_wins / recent_battles
                     recentWinRatePercent = "{:.1%}".format(recentWinRate)
 
                 else:
@@ -240,7 +237,7 @@ class Stats:
 
     def get_tank_stats(self, period):
         data_list = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
-                    '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
+                     '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
         if period.upper() in list(data_list.keys()):
             data = data_list[period.upper()]
             if period.upper() != "OVERALL":
@@ -248,15 +245,15 @@ class Stats:
             else:
                 return Embed(title='Soon')
         top_six = sorted_tank_data[0:6]
-        tankEmbed = Embed(title=self.startTitleStr,
-                          description=f"**Last {period} Stats**",
-                          color=get_wn8_color(data['overallWN8']),
-                          url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+        tank_embed = Embed(title=self.startTitleStr,
+                           description=f"**Last {period} Stats**",
+                           color=get_wn8_color(data['overallWN8']),
+                           url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
 
         for tank in top_six:
-            tankEmbed.add_field(name=tank['name'],
-                                value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
-        return tankEmbed
+            tank_embed.add_field(name=tank['name'],
+                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
+        return tank_embed
 
 
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
@@ -331,8 +328,8 @@ async def stats(ctx, *args):
             await sent_channel.send('UwU sumthwing bworke UwU')
 
         if any(item.startswith('-') for item in args):
-            sentFlags = [i for i in args if i.startswith('-')]
-            if '-marks' in sentFlags or '-all' in sentFlags:
+            sent_flags = [i for i in args if i.startswith('-')]
+            if '-marks' in sent_flags or '-all' in sent_flags:
                 embed = user_instance.get_marks()
                 await sent_channel.send(embed=embed)
         if time:
@@ -403,7 +400,7 @@ async def marks(ctx, *args):
             if x not in server_list:
                 name_str += str(x)
 
-        tank_list, short_tank_list ,short_and_long_list, short_to_long_dict = get_tank_list(user_server)
+        tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(user_server)
         tank_guess = process.extractOne(str(name_str), list(short_and_long_list))
         if tank_guess[0] in short_tank_list:
             formatted_tank_guess = short_to_long_dict[tank_guess[0]]
