@@ -32,10 +32,8 @@ class BotError(Exception):
 
 def get_tank_list(server='com'):
     server_to_data = {'com': na_image_api, 'eu': eu_image_api, 'asia': asia_image_api}
-    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data'] if
-                 server_to_data[server]['data'][i]['tier'] >= 5]
-    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data'] if
-                       server_to_data[server]['data'][i]['tier'] >= 5]
+    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data']]
+    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data']]
 
     short_and_long_list = tank_list + short_name_list
 
