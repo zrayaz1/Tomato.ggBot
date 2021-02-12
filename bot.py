@@ -390,6 +390,7 @@ class TankData:
 
 @client.command(aliases=['tankstats', 'tanks', 'Tank'])
 async def marks(ctx, *args):
+
     if args:
         server_list = ['na', 'eu', 'asia']
         server = [i for i in args if i in server_list]
@@ -403,10 +404,13 @@ async def marks(ctx, *args):
         name_str = ""
         for x in args:
             if x not in server_list:
-                name_str += str(x)
+                name_str += str(x) + " "
+        name_str = name_str[:-1]
 
-        tank_list, short_tank_list ,short_and_long_list, short_to_long_dict = get_tank_list(user_server)
+        tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(user_server)
         tank_guess = process.extractOne(str(name_str), list(short_and_long_list))
+        print(process.extract(str(name_str), list(short_and_long_list)))
+        print('Marks Called by ' + str(ctx.guild) + " " + str(ctx.message.author) + f" Called on {name_str}")
         if tank_guess[0] in short_tank_list:
             formatted_tank_guess = short_to_long_dict[tank_guess[0]]
         else:
@@ -417,6 +421,7 @@ async def marks(ctx, *args):
             await ctx.channel.send('Invalid Tank Name')
             return
         await ctx.channel.send(embed=user_tank.get_moe_embed())
+
 
 
 client.run(TOKEN)
