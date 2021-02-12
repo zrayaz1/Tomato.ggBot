@@ -32,8 +32,10 @@ class BotError(Exception):
 
 def get_tank_list(server='com'):
     server_to_data = {'com': na_image_api, 'eu': eu_image_api, 'asia': asia_image_api}
-    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data']]
-    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data']]
+    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data'] if
+                 server_to_data[server]['data'][i]['tier'] >= 5]
+    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data'] if
+                       server_to_data[server]['data'][i]['tier'] >= 5]
 
     short_and_long_list = tank_list + short_name_list
 
@@ -56,11 +58,11 @@ def update_mark_data():
 def update_vehicles_icons():
     global na_image_api, eu_image_api, asia_image_api
     na_image_api = requests.get(
-        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
+        "https://api.worldoftanks.com/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier").json()
     eu_image_api = requests.get(
-        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
+        "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier").json()
     asia_image_api = requests.get(
-        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name").json()
+        "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier").json()
 
 
 @client.event
