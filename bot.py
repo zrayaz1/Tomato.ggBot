@@ -123,6 +123,7 @@ def get_short_hand(position):
 
 class Stats:
     def __init__(self, user_id: str, server: str, name: str, wot_api_key: str):
+
         if server == 'com':
             self.defaultTimeOut = 8
         else:
@@ -183,6 +184,7 @@ class Stats:
             self.clanIconUrl = clan_data[str(self.userId)]['clan']['emblems']['x64']['portal']
             self.clanPosition = clan_data[str(self.userId)]['role']
             self.shortClanPosition = get_short_hand(self.clanPosition)
+
 
     def get_marks(self):
         embed = Embed(title=f"{self.userName}'s Marks", color=self.overallWN8Color)
@@ -312,7 +314,7 @@ async def stats(ctx, *args):
         if server_passed:
             search_for_id_json = requests.get(api_url.format(user_server, api_key, name)).json()
             if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
-                await ctx.channel.send('Invalid Username1')
+                await ctx.channel.send('Missing api data: Try again')
             else:
                 user_id = search_for_id_json['data'][0]['account_id']
         else:
@@ -330,7 +332,7 @@ async def stats(ctx, *args):
             await sent_channel.send('api timeout: invalid user?')
             return
         except Exception:
-            await sent_channel.send('UwU sumthwing bworke UwU')
+            await sent_channel.send('I have no idea what broke')
 
         if any(item.startswith('-') for item in args):
             sentFlags = [i for i in args if i.startswith('-')]
