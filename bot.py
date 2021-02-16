@@ -77,8 +77,8 @@ async def help(ctx):
     test_embed = Embed()
     test_embed.set_footer(text='help')
 
-    test_embed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`')
-    test_embed.add_field(name='Tank Marks', value='`$marks [tank name] [server]`\n ex. `$marks obj 140 na`')
+    test_embed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`', inline=False)
+    test_embed.add_field(name='Tank Marks', value='`$marks [tank name] [server]`\n ex. `$marks obj 140 na`',inline=False)
     await ctx.channel.send(embed=test_embed)
 
 

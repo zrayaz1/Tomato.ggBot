@@ -32,8 +32,10 @@ class BotError(Exception):
 
 def get_tank_list(server='com'):
     server_to_data = {'com': na_image_api, 'eu': eu_image_api, 'asia': asia_image_api}
-    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data'] if server_to_data[server]['data'][i]['tier'] >= 5]
-    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data'] if server_to_data[server]['data'][i]['tier'] >= 5]
+    tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data'] if
+                 server_to_data[server]['data'][i]['tier'] >= 5]
+    short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data'] if
+                       server_to_data[server]['data'][i]['tier'] >= 5]
 
     short_and_long_list = tank_list + short_name_list
 
@@ -70,13 +72,14 @@ async def on_ready():
     update_mark_data()
     print('updates finished')
 
-
 @client.command()
 async def help(ctx):
     test_embed = Embed()
     test_embed.set_footer(text='help')
 
-    test_embed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`')
+
+    test_embed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`', inline=False)
+    test_embed.add_field(name='Tank Marks', value='`$marks [tank name] [server]`\n ex. `$marks obj 140 na`',inline=False)
     await ctx.channel.send(embed=test_embed)
 
 
@@ -122,6 +125,7 @@ def get_short_hand(position):
 
 class Stats:
     def __init__(self, user_id: str, server: str, name: str, wot_api_key: str):
+
         if server == 'com':
             self.defaultTimeOut = 8
         else:
@@ -182,7 +186,7 @@ class Stats:
             self.clanIconUrl = clan_data[str(self.userId)]['clan']['emblems']['x64']['portal']
             self.clanPosition = clan_data[str(self.userId)]['role']
             self.shortClanPosition = get_short_hand(self.clanPosition)
-        self.total_battles = self.jsonOutput["overall"]['battles']
+
 
     def get_marks(self):
         embed = Embed(title=f"{self.userName}'s Marks", color=self.overallWN8Color)
@@ -206,24 +210,29 @@ class Stats:
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
             testEmbed.set_thumbnail(url=self.clanIconUrl)
 
+
+
         else:
             testEmbed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+        if self.sealClubber:
+            testEmbed.set_author(name="🚨WARNING SEALCLUBBER🚨")
 
         for x in list(dataList.keys()):
             values = list(dict(list(dataList[x].items())[0:4]).values())
             if x == 'overall':
+                self.total_battles = self.jsonOutput["overall"]['battles']
                 total_wins = self.jsonOutput["overall"]['wins']
-                win_rate = int(total_wins) / int(self.total_battles)
-                win_rate_percent = "{:.1%}".format(win_rate)
+                winrate = int(total_wins) / int(self.total_battles)
+                winRatePercent = "{:.1%}".format(winrate)
                 testEmbed.add_field(name=f"**{x}**",
-                                    value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{win_rate_percent}`\nAvgTier: `{str(values[2])[0:3]}`',
+                                    value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
                                     inline=True)
             else:
-                recent_battles = int(values[0])
-                recents_wins = dataList[x]['wins']
-                if recent_battles != 0:
-                    recentWinRate = recents_wins / recent_battles
+                recentBattles = int(values[0])
+                recentsWins = dataList[x]['wins']
+                if recentBattles != 0:
+                    recentWinRate = recentsWins / recentBattles
                     recentWinRatePercent = "{:.1%}".format(recentWinRate)
 
                 else:
@@ -237,7 +246,7 @@ class Stats:
 
     def get_tank_stats(self, period):
         data_list = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
-                     '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
+                    '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
         if period.upper() in list(data_list.keys()):
             data = data_list[period.upper()]
             if period.upper() != "OVERALL":
@@ -245,15 +254,15 @@ class Stats:
             else:
                 return Embed(title='Soon')
         top_six = sorted_tank_data[0:6]
-        tank_embed = Embed(title=self.startTitleStr,
-                           description=f"**Last {period} Stats**",
-                           color=get_wn8_color(data['overallWN8']),
-                           url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+        tankEmbed = Embed(title=self.startTitleStr,
+                          description=f"**Last {period} Stats**",
+                          color=get_wn8_color(data['overallWN8']),
+                          url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
 
         for tank in top_six:
-            tank_embed.add_field(name=tank['name'],
-                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
-        return tank_embed
+            tankEmbed.add_field(name=tank['name'],
+                                value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
+        return tankEmbed
 
 
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
@@ -307,7 +316,7 @@ async def stats(ctx, *args):
         if server_passed:
             search_for_id_json = requests.get(api_url.format(user_server, api_key, name)).json()
             if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
-                await ctx.channel.send('Invalid Username1')
+                await ctx.channel.send('Missing api data: Try again')
             else:
                 user_id = search_for_id_json['data'][0]['account_id']
         else:
@@ -325,11 +334,11 @@ async def stats(ctx, *args):
             await sent_channel.send('api timeout: invalid user?')
             return
         except Exception:
-            await sent_channel.send('UwU sumthwing bworke UwU')
+            await sent_channel.send('I have no idea what broke')
 
         if any(item.startswith('-') for item in args):
-            sent_flags = [i for i in args if i.startswith('-')]
-            if '-marks' in sent_flags or '-all' in sent_flags:
+            sentFlags = [i for i in args if i.startswith('-')]
+            if '-marks' in sentFlags or '-all' in sentFlags:
                 embed = user_instance.get_marks()
                 await sent_channel.send(embed=embed)
         if time:
@@ -374,9 +383,9 @@ class TankData:
         self.moeEmbed = Embed(title=f"{self.tank} {self.server_name.upper()}")
 
     def get_moe_embed(self):
-        self.moeEmbed.add_field(name='Marks',
+        self.moeEmbed.add_field(name='Marks(Dmg + Track/Spot)',
                                 value=f"1 Mark: `{self.markData['65']}`\n2 Mark: `{self.markData['85']}`\n3 Mark: `{self.markData['95']}`\n100% MoE: `{self.markData['100']}`")
-        self.moeEmbed.add_field(name='Mastery',
+        self.moeEmbed.add_field(name='Mastery(XP)',
                                 value=f"3st Class: `{self.masteryData[0]}`\n2st Class: `{self.masteryData[1]}`\n1st Class: `{self.masteryData[2]}`\nMastery: `{self.masteryData[3]}`")
         url = self.data[0]['data'][self.tankId]['images']['big_icon']
         self.moeEmbed.set_thumbnail(url=url)
@@ -416,6 +425,7 @@ async def marks(ctx, *args):
             await ctx.channel.send('Invalid Tank Name')
             return
         await ctx.channel.send(embed=user_tank.get_moe_embed())
+
 
 
 client.run(localTOKEN)
