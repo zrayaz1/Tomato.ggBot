@@ -2,3 +2,4 @@ requests
 git+https://github.com/Rapptz/discord.py
 fuzzywuzzy
 python-Levenshtein
+discord-py-slash-command
