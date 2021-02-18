@@ -287,11 +287,18 @@ async def on_ready():
     print('up')
 update_vehicles_icons()
 update_mark_data()
+test_list = []
+for x in ["OVERALL", "24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']:
+    d = {}
+    d['name'] = x.lower()
+    d['value'] = x.lower()
+    test_list.append(d)
 print('finished')
 @slash.slash(name="stats",description='WoT Player Statistics',
              options=[manage_commands.create_option(name='user',description='Players Username',option_type=3,required=True),
-                      manage_commands.create_option(name='Server',description='Server To search aganist. Options: na, eu, asia.',option_type=3,required=False),
-                      manage_commands.create_option(name='Timeperiod', description='Options: 24h, 7days, 30days, 60days, 1000battles.',option_type=3,required=False)]
+                      manage_commands.create_option(name='Server',description='Server To search aganist. Options: na, eu, asia.',choices=[{"name": "na","value": "na"},{"name": "eu","value": "eu"},{"name": "asia","value": "asia"}],
+                                                    option_type=3,required=False),
+                      manage_commands.create_option(name='Timeperiod', description='Options: 24h, 7days, 30days, 60days, 1000battles.',choices=test_list,option_type=3,required=False)]
                       )
 async def _stats(ctx, *args): # Defines a new "context" (ctx) command called "ping."
 
@@ -472,9 +479,13 @@ async def stats(ctx, *args):
 
         await sent_channel.send("Usage: $stats [user] -flags")
 @slash.slash(name='marks',description='WoT Tank MoE and Mastery',
-             options=[manage_commands.create_option(name='Tank',description='Name of Tank',option_type=3,required=True),
-                      manage_commands.create_option(name='Server',description='Options: na, eu, asia. Defaults to na',option_type=3,required=False)]
-                      )
+             options=[
+                 manage_commands.create_option(name='Tank', description='Name of Tank', option_type=3, required=True),
+                 manage_commands.create_option(name='Server', description='Options: na, eu, asia. Defaults to na',
+                                               choices=[{"name": "na", "value": "na"}, {"name": "eu", "value": "eu"},
+                                                        {"name": "asia", "value": "asia"}], option_type=3,
+                                               required=False)]
+             )
 async def _marks(ctx, *args):
     if args:
         server_list = ['na', 'eu', 'asia']
