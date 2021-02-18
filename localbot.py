@@ -3,12 +3,23 @@ import requests
 from discord import *
 from discord.ext import commands
 from fuzzywuzzy import process
+from discord_slash import SlashCommand, SlashContext
 
 na_image_api, eu_image_api, asia_image_api = {}, {}, {}
 na_moe_data, eu_moe_data, asia_moe_data = {}, {}, {}
 na_mastery_data, eu_mastery_data, asia_mastery_data = {}, {}, {}
 client = commands.Bot(command_prefix='!')
-client.remove_command('help')
+slash = SlashCommand(client, sync_commands=True)
+guild_ids = [719707418833190995] # Put your server ID in this array.
+
+
+
+@slash.slash(name="stats", guild_ids=guild_ids)
+async def _stats(ctx): # Defines a new "context" (ctx) command called "ping."
+    await ctx.respond()
+    await ctx.send(f"Pong! ({client.latency*1000}ms)")
+
+
 colorRatingNew = {
     "very_bad": 0x7d1930,
     "bad": 0xf11919,
@@ -72,15 +83,7 @@ async def on_ready():
     update_mark_data()
     print('updates finished')
 
-@client.command()
-async def help(ctx):
-    test_embed = Embed()
-    test_embed.set_footer(text='help')
 
-
-    test_embed.add_field(name='Player Stats', value='`$stats [name] [server]`\n ex. `$stats zrayaz na`', inline=False)
-    test_embed.add_field(name='Tank Marks', value='`$marks [tank name] [server]`\n ex. `$marks obj 140 na`',inline=False)
-    await ctx.channel.send(embed=test_embed)
 
 
 def get_wn8_color(wn8: int):
@@ -425,6 +428,7 @@ async def marks(ctx, *args):
             await ctx.channel.send('Invalid Tank Name')
             return
         await ctx.channel.send(embed=user_tank.get_moe_embed())
+
 
 
 
