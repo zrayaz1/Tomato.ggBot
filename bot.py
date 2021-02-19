@@ -456,7 +456,8 @@ async def stats(ctx, *args):
         if server_passed:
             search_for_id_json = requests.get(api_url.format(user_server, api_key, name)).json()
             if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
-                await ctx.channel.send('Missing api data: Try again')
+                await ctx.send('invalid Username')
+                return
             else:
                 user_id = search_for_id_json['data'][0]['account_id']
         else:
@@ -474,7 +475,7 @@ async def stats(ctx, *args):
             await sent_channel.send('api timeout: invalid user?')
             return
         except Exception:
-            await sent_channel.send('I have no idea what broke')
+            return
 
         if any(item.startswith('-') for item in args):
             sentFlags = [i for i in args if i.startswith('-')]
