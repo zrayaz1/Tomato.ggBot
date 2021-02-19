@@ -314,8 +314,8 @@ print('finished')
                                                     description='Options: 24h, 7days, 30days, 60days, 1000battles.',
                                                     choices=list_of_time_dicts, option_type=3, required=False)]
              )
-async def _stats(ctx, *args):  # Defines a new "context" (ctx) command called "ping."
-
+async def _stats(ctx: SlashContext, *args):  
+    await ctx.respond()
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
 
