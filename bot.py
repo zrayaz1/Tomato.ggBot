@@ -230,9 +230,7 @@ class Stats:
         else:
             testEmbed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
-        if self.sealClubber:
-            testEmbed.set_author(name="🚨WARNING SEALCLUBBER🚨")
-
+      
         for x in list(dataList.keys()):
             values = list(dict(list(dataList[x].items())[0:4]).values())
             if x == 'overall':
@@ -387,8 +385,8 @@ async def _stats(ctx, *args): # Defines a new "context" (ctx) command called "pi
 
         my_embed = user_instance.get_default_stats()
 
+        await ctx.send(embed=my_embed)
         await ctx.channel.send(embed=my_embed)
-
 
 
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
