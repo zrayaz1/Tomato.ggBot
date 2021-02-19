@@ -74,8 +74,8 @@ def get_tank_list(server='com'):
     short_and_long_list = tank_list + short_name_list
 
     short_to_long_dict = {}
-    for x in server_to_data[server]['data']:
-        short_to_long_dict[server_to_data[server]['data'][x]['short_name']] = server_to_data[server]['data'][x]['name']
+    for tank_data_from_server in server_to_data[server]['data']:
+        short_to_long_dict[server_to_data[server]['data'][tank_data_from_server]['short_name']] = server_to_data[server]['data'][tank_data_from_server]['name']
     return tank_list, short_name_list, short_and_long_list, short_to_long_dict
 
 
@@ -231,26 +231,26 @@ class Stats:
             testEmbed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
       
-        for x in list(dataList.keys()):
-            values = list(dict(list(dataList[x].items())[0:4]).values())
-            if x == 'overall':
+        for time_period in list(dataList.keys()):
+            values = list(dict(list(dataList[time_period].items())[0:4]).values())
+            if time_period == 'overall':
                 self.total_battles = self.jsonOutput["overall"]['battles']
                 total_wins = self.jsonOutput["overall"]['wins']
                 winrate = int(total_wins) / int(self.total_battles)
                 winRatePercent = "{:.1%}".format(winrate)
-                testEmbed.add_field(name=f"**{x}**",
+                testEmbed.add_field(name=f"**{time_period}**",
                                     value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
                                     inline=True)
             else:
                 recentBattles = int(values[0])
-                recentsWins = dataList[x]['wins']
+                recentsWins = dataList[time_period]['wins']
                 if recentBattles != 0:
                     recentWinRate = recentsWins / recentBattles
                     recentWinRatePercent = "{:.1%}".format(recentWinRate)
 
                 else:
                     recentWinRatePercent = '-'
-                testEmbed.add_field(name=x,
+                testEmbed.add_field(name=time_period,
                                     value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
         testEmbed.set_footer(text='Powered by Tomato.gg',
                              icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
@@ -285,18 +285,18 @@ async def on_ready():
     print('up')
 update_vehicles_icons()
 update_mark_data()
-test_list = []
-for x in ["24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']:
-    d = {}
-    d['name'] = x.lower()
-    d['value'] = x.lower()
-    test_list.append(d)
+list_of_time_dicts = []
+for time_period_no_overall in ["24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']:
+    time_choices_dict = {}
+    time_choices_dict['name'] = time_period_no_overall.lower()
+    time_choices_dict['value'] = time_period_no_overall.lower()
+    list_of_time_dicts.append(time_choices_dict)
 print('finished')
 @slash.slash(name="stats",description='WoT Player Statistics',
              options=[manage_commands.create_option(name='user',description='Players Username',option_type=3,required=True),
                       manage_commands.create_option(name='Server',description='Server To search aganist. Options: na, eu, asia.',choices=[{"name": "na","value": "na"},{"name": "eu","value": "eu"},{"name": "asia","value": "asia"}],
                                                     option_type=3,required=False),
-                      manage_commands.create_option(name='Timeperiod', description='Options: 24h, 7days, 30days, 60days, 1000battles.',choices=test_list,option_type=3,required=False)]
+                      manage_commands.create_option(name='Timeperiod', description='Options: 24h, 7days, 30days, 60days, 1000battles.', choices=list_of_time_dicts, option_type=3, required=False)]
                       )
 async def _stats(ctx, *args): # Defines a new "context" (ctx) command called "ping."
 
@@ -525,9 +525,9 @@ async def marks(ctx, *args):
         else:
             user_server = 'com'
         name_str = ""
-        for x in args:
-            if x not in server_list:
-                name_str += str(x) + " "
+        for _arg in args:
+            if _arg not in server_list:
+                name_str += str(_arg) + " "
         name_str = name_str[:-1]
 
         tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(user_server)
