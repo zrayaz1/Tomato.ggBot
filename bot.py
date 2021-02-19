@@ -288,7 +288,7 @@ async def on_ready():
 update_vehicles_icons()
 update_mark_data()
 test_list = []
-for x in ["OVERALL", "24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']:
+for x in ["24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']:
     d = {}
     d['name'] = x.lower()
     d['value'] = x.lower()
@@ -387,7 +387,7 @@ async def _stats(ctx, *args): # Defines a new "context" (ctx) command called "pi
 
         my_embed = user_instance.get_default_stats()
 
-        await ctx.send(embed=my_embed)
+        await ctx.channel.send(embed=my_embed)
 
 
 
