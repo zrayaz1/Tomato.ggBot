@@ -144,7 +144,7 @@ def get_short_hand(position):
     return short_positions[position]
 
 
-class Stats:
+class PlayerStats:
     def __init__(self, user_id: str, server: str, name: str, wot_api_key: str):
 
         if server == 'com':
@@ -382,7 +382,7 @@ async def _stats(ctx, *args):  # Defines a new "context" (ctx) command called "p
 
         try:
 
-            user_instance = Stats(user_id, user_server, sent_username, api_key)
+            user_instance = PlayerStats(user_id, user_server, sent_username, api_key)
         except requests.exceptions.Timeout:
             await ctx.send('api timeout: invalid user?')
             return
@@ -400,9 +400,9 @@ async def _stats(ctx, *args):  # Defines a new "context" (ctx) command called "p
             return
 
         my_embed = user_instance.get_default_stats()
-
-        await ctx.send(embed=my_embed)
         await ctx.channel.send(embed=my_embed)
+        await ctx.send(embed=my_embed)
+
 
 
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
@@ -469,7 +469,7 @@ async def stats(ctx, *args):
 
         try:
 
-            user_instance = Stats(user_id, user_server, name, api_key)
+            user_instance = PlayerStats(user_id, user_server, name, api_key)
         except requests.exceptions.Timeout:
             await sent_channel.send('api timeout: invalid user?')
             return
