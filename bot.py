@@ -399,9 +399,9 @@ async def _stats(ctx, *args):  # Defines a new "context" (ctx) command called "p
             await ctx.send(embed=user_instance.get_tank_stats(sent_time_period))
             return
 
-        my_embed = user_instance.get_default_stats()
-        await ctx.channel.send(embed=my_embed)
-        await ctx.send(embed=my_embed)
+
+        await ctx.channel.send(embed=user_instance.get_default_stats())
+        # await ctx.send(embed=user_instance.get_default_stats())
 
 
 
