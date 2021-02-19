@@ -9,8 +9,8 @@ from discord_slash.utils import manage_commands
 na_image_api, eu_image_api, asia_image_api = {}, {}, {}
 na_moe_data, eu_moe_data, asia_moe_data = {}, {}, {}
 na_mastery_data, eu_mastery_data, asia_mastery_data = {}, {}, {}
-TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.1rqXEp7zGZR-f1jvvFuRH4lKFdE'
-localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.ouaG4EF-nQWxt3ACnrpYHLK0zXI'
+TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.Z99hiYDDt8DPMpWQRN_nr5wFedU'
+localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.CAAz-_qetCkJAV6y4C4VjbKTSCA'
 
 client = commands.Bot(command_prefix='$')
 slash = SlashCommand(client, sync_commands=True)  # Declares slash commands through the client.
