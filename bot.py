@@ -5,6 +5,7 @@ from discord.ext import commands
 from fuzzywuzzy import process
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils import manage_commands
+
 na_image_api, eu_image_api, asia_image_api = {}, {}, {}
 na_moe_data, eu_moe_data, asia_moe_data = {}, {}, {}
 na_mastery_data, eu_mastery_data, asia_mastery_data = {}, {}, {}
@@ -12,7 +13,9 @@ TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.1rqXEp7zGZR-f1jvvFuRH4lKFdE'
 localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.ouaG4EF-nQWxt3ACnrpYHLK0zXI'
 
 client = commands.Bot(command_prefix='$')
-slash = SlashCommand(client, sync_commands=True) # Declares slash commands through the client.
+slash = SlashCommand(client, sync_commands=True)  # Declares slash commands through the client.
+
+
 class TankData:
     def __init__(self, sent_tank, server="com"):
         server_to_data = {'com': [na_image_api, na_moe_data, na_mastery_data],
@@ -46,7 +49,7 @@ class TankData:
         return self.moeEmbed
 
 
- # Put your server ID in this array.
+# Put your server ID in this array.
 colorRatingNew = {
     "very_bad": 0x7d1930,
     "bad": 0xf11919,
@@ -59,6 +62,7 @@ colorRatingNew = {
     "unicum": 0xc64cff,
     "super_unicum": 0x7d2ad8
 }
+
 
 class BotError(Exception):
     pass
@@ -75,7 +79,8 @@ def get_tank_list(server='com'):
 
     short_to_long_dict = {}
     for tank_data_from_server in server_to_data[server]['data']:
-        short_to_long_dict[server_to_data[server]['data'][tank_data_from_server]['short_name']] = server_to_data[server]['data'][tank_data_from_server]['name']
+        short_to_long_dict[server_to_data[server]['data'][tank_data_from_server]['short_name']] = \
+        server_to_data[server]['data'][tank_data_from_server]['name']
     return tank_list, short_name_list, short_and_long_list, short_to_long_dict
 
 
@@ -97,6 +102,7 @@ def update_vehicles_icons():
         "https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier").json()
     asia_image_api = requests.get(
         "https://api.worldoftanks.asia/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier").json()
+
 
 def get_wn8_color(wn8: int):
     if wn8 >= 2900:
@@ -202,7 +208,6 @@ class Stats:
             self.clanPosition = clan_data[str(self.userId)]['role']
             self.shortClanPosition = get_short_hand(self.clanPosition)
 
-
     def get_marks(self):
         embed = Embed(title=f"{self.userName}'s Marks", color=self.overallWN8Color)
         embed.add_field(name='Total Marks',
@@ -230,7 +235,7 @@ class Stats:
         else:
             testEmbed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
-      
+
         for time_period in list(dataList.keys()):
             values = list(dict(list(dataList[time_period].items())[0:4]).values())
             if time_period == 'overall':
@@ -259,7 +264,7 @@ class Stats:
 
     def get_tank_stats(self, period):
         data_list = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
-                    '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
+                     '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
         if period.upper() in list(data_list.keys()):
             data = data_list[period.upper()]
             if period.upper() != "OVERALL":
@@ -283,6 +288,8 @@ async def on_ready():
     await client.change_presence(activity=discord.Game(name='/stats or /marks'))
 
     print('up')
+
+
 update_vehicles_icons()
 update_mark_data()
 list_of_time_dicts = []
@@ -292,13 +299,22 @@ for time_period_no_overall in ["24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES'
     time_choices_dict['value'] = time_period_no_overall.lower()
     list_of_time_dicts.append(time_choices_dict)
 print('finished')
-@slash.slash(name="stats",description='WoT Player Statistics',
-             options=[manage_commands.create_option(name='user',description='Players Username',option_type=3,required=True),
-                      manage_commands.create_option(name='Server',description='Server To search aganist. Options: na, eu, asia.',choices=[{"name": "na","value": "na"},{"name": "eu","value": "eu"},{"name": "asia","value": "asia"}],
-                                                    option_type=3,required=False),
-                      manage_commands.create_option(name='Timeperiod', description='Options: 24h, 7days, 30days, 60days, 1000battles.', choices=list_of_time_dicts, option_type=3, required=False)]
-                      )
-async def _stats(ctx, *args): # Defines a new "context" (ctx) command called "ping."
+
+
+@slash.slash(name="stats", description='WoT Player Statistics',
+             options=[manage_commands.create_option(name='user', description='Players Username', option_type=3,
+                                                    required=True),
+                      manage_commands.create_option(name='Server',
+                                                    description='Server To search aganist. Options: na, eu, asia.',
+                                                    choices=[{"name": "na", "value": "na"},
+                                                             {"name": "eu", "value": "eu"},
+                                                             {"name": "asia", "value": "asia"}],
+                                                    option_type=3, required=False),
+                      manage_commands.create_option(name='Timeperiod',
+                                                    description='Options: 24h, 7days, 30days, 60days, 1000battles.',
+                                                    choices=list_of_time_dicts, option_type=3, required=False)]
+             )
+async def _stats(ctx, *args):  # Defines a new "context" (ctx) command called "ping."
 
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
@@ -335,30 +351,30 @@ async def _stats(ctx, *args): # Defines a new "context" (ctx) command called "pi
         print(args[0])
 
         time_periods = ["OVERALL", "24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']
-        name = args[0]
-        server = [i for i in args if i in server_list]
-        time = [i for i in args if i.upper() in time_periods]
-        print(server)
-        print(time)
-        if server:
-            server = server[0]
+        sent_username = args[0]
+        player_sent_server = [i for i in args if i in server_list]
+        sent_time_period = [i for i in args if i.upper() in time_periods]
+        print(player_sent_server)
+        print(sent_time_period)
+        if player_sent_server:
+            player_sent_server = player_sent_server[0]
             server_passed = True
-            if server == 'na':
+            if player_sent_server == 'na':
                 user_server = 'com'
             else:
-                user_server = server
+                user_server = player_sent_server
         else:
             server_passed = False
 
         if server_passed:
-            search_for_id_json = requests.get(api_url.format(user_server, api_key, name)).json()
+            search_for_id_json = requests.get(api_url.format(user_server, api_key, sent_username)).json()
             if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
                 await ctx.channel.send('Missing api data: Try again')
             else:
                 user_id = search_for_id_json['data'][0]['account_id']
         else:
             try:
-                user_id, user_server = find_server(name)
+                user_id, user_server = find_server(sent_username)
 
             except Exception:
                 await ctx.send('Invalid Username (All servers)')
@@ -366,7 +382,7 @@ async def _stats(ctx, *args): # Defines a new "context" (ctx) command called "pi
 
         try:
 
-            user_instance = Stats(user_id, user_server, name, api_key)
+            user_instance = Stats(user_id, user_server, sent_username, api_key)
         except requests.exceptions.Timeout:
             await ctx.send('api timeout: invalid user?')
             return
@@ -378,9 +394,9 @@ async def _stats(ctx, *args): # Defines a new "context" (ctx) command called "pi
             if '-marks' in sentFlags or '-all' in sentFlags:
                 embed = user_instance.get_marks()
                 await ctx.send(embed=embed)
-        if time:
-            time = time[0]
-            await ctx.send(embed=user_instance.get_tank_stats(time))
+        if sent_time_period:
+            sent_time_period = sent_time_period[0]
+            await ctx.send(embed=user_instance.get_tank_stats(sent_time_period))
             return
 
         my_embed = user_instance.get_default_stats()
@@ -476,7 +492,9 @@ async def stats(ctx, *args):
     else:
 
         await sent_channel.send("Usage: $stats [user] -flags")
-@slash.slash(name='marks',description='WoT Tank MoE and Mastery',
+
+
+@slash.slash(name='marks', description='WoT Tank MoE and Mastery',
              options=[
                  manage_commands.create_option(name='Tank', description='Name of Tank', option_type=3, required=True),
                  manage_commands.create_option(name='Server', description='Options: na, eu, asia. Defaults to na',
@@ -511,9 +529,10 @@ async def _marks(ctx, *args):
             await ctx.send('Invalid Tank Name')
             return
         await ctx.send(embed=user_tank.get_moe_embed())
+
+
 @client.command(aliases=['tankstats', 'tanks', 'Tank'])
 async def marks(ctx, *args):
-
     if args:
         server_list = ['na', 'eu', 'asia']
         server = [i for i in args if i in server_list]
@@ -544,7 +563,6 @@ async def marks(ctx, *args):
             await ctx.channel.send('Invalid Tank Name')
             return
         await ctx.channel.send(embed=user_tank.get_moe_embed())
-
 
 
 client.run(TOKEN)
