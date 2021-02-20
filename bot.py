@@ -400,10 +400,8 @@ async def _stats(ctx: SlashContext, *args):
             return
 
         my_embed = user_instance.get_default_stats()
-        if user_server != 'com':
-            await ctx.channel.send(embed=my_embed)
-        if user_server == 'com':
-            await ctx.send(embed=my_embed)
+        
+        await ctx.send(embed=my_embed)
 
 
 
@@ -505,7 +503,8 @@ async def stats(ctx, *args):
                                                         {"name": "asia", "value": "asia"}], option_type=3,
                                                required=False)]
              )
-async def _marks(ctx, *args):
+async def _marks(ctx: SlashContext, *args):
+    await ctx.respond()
     if args:
         server_list = ['na', 'eu', 'asia']
         server = [i for i in args if i in server_list]
@@ -517,11 +516,12 @@ async def _marks(ctx, *args):
         else:
             user_server = 'com'
         name_str = args[0]
-        print(name_str)
+        
+       
+
         tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(user_server)
         tank_guess = process.extractOne(str(name_str), list(short_and_long_list))
-        print(process.extract(str(name_str), list(short_and_long_list)))
-
+       
         if tank_guess[0] in short_tank_list:
             formatted_tank_guess = short_to_long_dict[tank_guess[0]]
         else:
@@ -532,7 +532,6 @@ async def _marks(ctx, *args):
             await ctx.send('Invalid Tank Name')
             return
         await ctx.send(embed=user_tank.get_moe_embed())
-
 
 @client.command(aliases=['tankstats', 'tanks', 'Tank'])
 async def marks(ctx, *args):
