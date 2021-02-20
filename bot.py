@@ -80,7 +80,7 @@ def get_tank_list(server='com'):
     short_to_long_dict = {}
     for tank_data_from_server in server_to_data[server]['data']:
         short_to_long_dict[server_to_data[server]['data'][tank_data_from_server]['short_name']] = \
-        server_to_data[server]['data'][tank_data_from_server]['name']
+            server_to_data[server]['data'][tank_data_from_server]['name']
     return tank_list, short_name_list, short_and_long_list, short_to_long_dict
 
 
@@ -265,12 +265,11 @@ class PlayerStats:
     def get_tank_stats(self, period):
         data_list = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
                      '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
-        if period.upper() in list(data_list.keys()):
-            data = data_list[period.upper()]
-            if period.upper() != "OVERALL":
-                sorted_tank_data = sorted(data['tankStats'], key=lambda item: item['battles'], reverse=True)
-            else:
-                return Embed(title='Soon')
+
+        data = data_list[period.upper()]
+
+        sorted_tank_data = sorted(data['tankStats'], key=lambda item: item['battles'], reverse=True)
+
         top_six = sorted_tank_data[0:6]
         tankEmbed = Embed(title=self.startTitleStr,
                           description=f"**Last {period} Stats**",
@@ -314,13 +313,10 @@ print('finished')
                                                     description='Options: 24h, 7days, 30days, 60days, 1000battles.',
                                                     choices=list_of_time_dicts, option_type=3, required=False)]
              )
-async def _stats(ctx: SlashContext, *args):  
+async def _stats(ctx: SlashContext, user,Server=[],Timeperiod=[]):
     await ctx.respond()
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
-
-    sent_channel = ctx.channel
-    server_list = ['na', 'eu', 'asia', 'ru']
 
     def find_server(username):
 
@@ -347,17 +343,14 @@ async def _stats(ctx: SlashContext, *args):
                 else:
                     raise Exception
 
-    if args:
-        print(args[0])
+    if user:
+        print(user)
 
         time_periods = ["OVERALL", "24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']
-        sent_username = args[0]
-        player_sent_server = [i for i in args if i in server_list]
-        sent_time_period = [i for i in args if i.upper() in time_periods]
-        print(player_sent_server)
-        print(sent_time_period)
+        sent_username = user
+        player_sent_server = Server
+        sent_time_period = Timeperiod
         if player_sent_server:
-            player_sent_server = player_sent_server[0]
             server_passed = True
             if player_sent_server == 'na':
                 user_server = 'com'
@@ -369,7 +362,7 @@ async def _stats(ctx: SlashContext, *args):
         if server_passed:
             search_for_id_json = requests.get(api_url.format(user_server, api_key, sent_username)).json()
             if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
-                await ctx.channel.send('Missing api data: Try again')
+                await ctx.send('Missing api data: Try again')
             else:
                 user_id = search_for_id_json['data'][0]['account_id']
         else:
@@ -389,20 +382,15 @@ async def _stats(ctx: SlashContext, *args):
         except Exception:
             await ctx.send('I have no idea what broke')
 
-        if any(item.startswith('-') for item in args):
-            sentFlags = [i for i in args if i.startswith('-')]
-            if '-marks' in sentFlags or '-all' in sentFlags:
-                embed = user_instance.get_marks()
-                await ctx.send(embed=embed)
+
         if sent_time_period:
-            sent_time_period = sent_time_period[0]
+            sent_time_period = sent_time_period
             await ctx.send(embed=user_instance.get_tank_stats(sent_time_period))
             return
 
         my_embed = user_instance.get_default_stats()
-        
-        await ctx.send(embed=my_embed)
 
+        await ctx.send(embed=my_embed)
 
 
 @client.command(aliases=["stat", "Stats", 'Stat', 'ZrayWantsToDie'])
@@ -503,25 +491,22 @@ async def stats(ctx, *args):
                                                         {"name": "asia", "value": "asia"}], option_type=3,
                                                required=False)]
              )
-async def _marks(ctx: SlashContext, *args):
+async def _marks(ctx: SlashContext, Tank,Server='na'):
     await ctx.respond()
-    if args:
-        server_list = ['na', 'eu', 'asia']
-        server = [i for i in args if i in server_list]
-        if server:
-            if server[0] == 'na':
-                user_server = 'com'
-            else:
-                user_server = server[0]
-        else:
+    if Tank:
+
+        server = Server
+
+        if server == 'na':
             user_server = 'com'
-        name_str = args[0]
-        
-       
+        else:
+            user_server = server
+
+        name_str = Tank.upper()
 
         tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(user_server)
         tank_guess = process.extractOne(str(name_str), list(short_and_long_list))
-       
+
         if tank_guess[0] in short_tank_list:
             formatted_tank_guess = short_to_long_dict[tank_guess[0]]
         else:
@@ -532,6 +517,7 @@ async def _marks(ctx: SlashContext, *args):
             await ctx.send('Invalid Tank Name')
             return
         await ctx.send(embed=user_tank.get_moe_embed())
+
 
 @client.command(aliases=['tankstats', 'tanks', 'Tank'])
 async def marks(ctx, *args):
@@ -562,9 +548,9 @@ async def marks(ctx, *args):
         try:
             user_tank = TankData(formatted_tank_guess, server=user_server)
         except BotError:
-            await ctx.channel.send('Invalid Tank Name')
+            await ctx.send('Invalid Tank Name')
             return
-        await ctx.channel.send(embed=user_tank.get_moe_embed())
+        await ctx.send(embed=user_tank.get_moe_embed())
 
 
-client.run(TOKEN)
+client.run(localTOKEN)
