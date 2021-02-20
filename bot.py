@@ -271,11 +271,13 @@ class PlayerStats:
         sorted_tank_data = sorted(data['tankStats'], key=lambda item: item['battles'], reverse=True)
 
         top_six = sorted_tank_data[0:6]
-        tankEmbed = Embed(title=self.startTitleStr,
-                          description=f"**Last {period} Stats**",
-                          color=get_wn8_color(data['overallWN8']),
-                          url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
-
+        try:
+            tankEmbed = Embed(title=self.startTitleStr,
+                              description=f"**Last {period} Stats**",
+                              color=get_wn8_color(data['overallWN8']),
+                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+        except Exception:
+            return Embed(title='Invalid Name')
         for tank in top_six:
             tankEmbed.add_field(name=tank['name'],
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
