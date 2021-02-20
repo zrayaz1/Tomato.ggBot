@@ -553,4 +553,4 @@ async def marks(ctx, *args):
         await ctx.send(embed=user_tank.get_moe_embed())
 
 
-client.run(localTOKEN)
+client.run(TOKEN)
