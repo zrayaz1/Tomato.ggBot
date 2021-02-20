@@ -487,24 +487,24 @@ async def stats(ctx, *args):
 
 @slash.slash(name='marks', description='WoT Tank MoE and Mastery',
              options=[
-                 manage_commands.create_option(name='Tank', description='Name of Tank', option_type=3, required=True),
-                 manage_commands.create_option(name='Server', description='Options: na, eu, asia. Defaults to na',
+                 manage_commands.create_option(name='tank', description='Name of Tank', option_type=3, required=True),
+                 manage_commands.create_option(name='server', description='Options: na, eu, asia. Defaults to na',
                                                choices=[{"name": "na", "value": "na"}, {"name": "eu", "value": "eu"},
                                                         {"name": "asia", "value": "asia"}], option_type=3,
                                                required=False)]
              )
-async def _marks(ctx: SlashContext, Tank,Server='na'):
+async def _marks(ctx: SlashContext, tank, server='na'):
     await ctx.respond()
-    if Tank:
+    if tank:
 
-        server = Server
+        server = server
 
         if server == 'na':
             user_server = 'com'
         else:
             user_server = server
 
-        name_str = Tank.upper()
+        name_str = tank.upper()
 
         tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(user_server)
         tank_guess = process.extractOne(str(name_str), list(short_and_long_list))
