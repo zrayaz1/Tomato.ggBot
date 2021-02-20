@@ -305,17 +305,17 @@ print('finished')
 @slash.slash(name="stats", description='WoT Player Statistics',
              options=[manage_commands.create_option(name='user', description='Players Username', option_type=3,
                                                     required=True),
-                      manage_commands.create_option(name='Server',
+                      manage_commands.create_option(name='server',
                                                     description='Server To search aganist. Options: na, eu, asia.',
                                                     choices=[{"name": "na", "value": "na"},
                                                              {"name": "eu", "value": "eu"},
                                                              {"name": "asia", "value": "asia"}],
                                                     option_type=3, required=False),
-                      manage_commands.create_option(name='Timeperiod',
+                      manage_commands.create_option(name='timeperiod',
                                                     description='Options: 24h, 7days, 30days, 60days, 1000battles.',
                                                     choices=list_of_time_dicts, option_type=3, required=False)]
              )
-async def _stats(ctx: SlashContext, user,Server=[],Timeperiod=[]):
+async def _stats(ctx: SlashContext, user, server=[], timeperiod=[]):
     await ctx.respond()
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
@@ -350,8 +350,8 @@ async def _stats(ctx: SlashContext, user,Server=[],Timeperiod=[]):
 
         time_periods = ["OVERALL", "24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']
         sent_username = user
-        player_sent_server = Server
-        sent_time_period = Timeperiod
+        player_sent_server = server
+        sent_time_period = timeperiod
         if player_sent_server:
             server_passed = True
             if player_sent_server == 'na':
