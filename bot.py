@@ -583,15 +583,15 @@ async def marks(ctx, *args):
             return
         await ctx.send(embed=user_tank.get_moe_embed())
 @slash.slash(name='ranks',description="WoT Hall of Fame Rankings",options=[
-    manage_commands.create_option(name='User',description="Player's Username",option_type=3,required=True),
-    manage_commands.create_option(name='Server',
+    manage_commands.create_option(name='user',description="Player's Username",option_type=3,required=True),
+    manage_commands.create_option(name='server',
                                   description='Server To search aganist.',
                                   choices=[{"name": "na", "value": "na"},
                                            {"name": "eu", "value": "eu"},
                                            {"name": "asia", "value": "asia"}],
                                   option_type=3, required=False),
 ])
-async def _ranks(ctx: SlashContext,User,Server=""):
+async def _ranks(ctx: SlashContext, user, server=""):
     await ctx.respond()
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
@@ -619,10 +619,10 @@ async def _ranks(ctx: SlashContext,User,Server=""):
                     return stats_user_id, 'asia'
                 else:
                     raise Exception
-    if User:
-        print(User)
-        sent_username = User
-        player_sent_server = Server
+    if user:
+        print(user)
+        sent_username = user
+        player_sent_server = server
 
         if player_sent_server:
             server_passed = True
