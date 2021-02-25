@@ -283,7 +283,7 @@ class PlayerStats:
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
         return tankEmbed
     def get_main_ranking(self):
-        main_ranking_api_url = "https://tomatobackend.herokuapp.com/api/hofmain/com/{}".format(self.userId)
+        main_ranking_api_url = "https://tomatobackend.herokuapp.com/api/hofmain/{}/{}".format(server,self.userId)
 
 
         self.ranking_data = requests.get(main_ranking_api_url).json()
