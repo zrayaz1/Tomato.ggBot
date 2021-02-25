@@ -282,7 +282,38 @@ class PlayerStats:
             tankEmbed.add_field(name=tank['name'],
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
         return tankEmbed
+    def get_main_ranking(self):
+        main_ranking_api_url = "https://tomatobackend.herokuapp.com/api/hofmain/com/{}".format(self.userId)
 
+
+        self.ranking_data = requests.get(main_ranking_api_url).json()
+        self.ranking_color = get_wn8_color(int(self.ranking_data['top']['wn8']['value']))
+        if self.isInClan:
+            main_ranking_embed = Embed(
+                title=f"{self.userName.capitalize()}'s Ranking ",
+                description=f"**{self.shortClanPosition} at [{self.clanName.upper()}]**",colour=self.ranking_color)
+            main_ranking_embed.set_thumbnail(url=self.clanIconUrl)
+        else:
+            main_ranking_embed = Embed(title=f"{self.userName.capitalize()}'s Ranking ",colour=self.ranking_color)
+        for section in self.ranking_data['top']:
+
+            if section not in ['total','battles','dmg_ratio']:
+                main_ranking_embed.add_field(name=f"{section.upper()}",value=f"Rank: `{self.ranking_data['top'][section]['ranking']}`\nValue: `{self.ranking_data['top'][section]['value']}`")
+            if section == 'dmg_ratio':
+                main_ranking_embed.add_field(name=f"DMG RATIO",value=f"Rank: `{self.ranking_data['top'][section]['ranking']}`\nValue: `{self.ranking_data['top'][section]['value']}`")
+
+
+
+        main_ranking_embed.set_footer(text='Powered by Tomato.gg || 60 days | 75 battles min | tier 6+',
+                             icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
+
+
+
+
+
+        return main_ranking_embed
+    def get_tanks_ranking(self):
+        pass
 
 @client.event
 async def on_ready():
@@ -315,7 +346,7 @@ print('finished')
                                                     description='Options: 24h, 7days, 30days, 60days, 1000battles.',
                                                     choices=list_of_time_dicts, option_type=3, required=False)]
              )
-async def _stats(ctx: SlashContext, user, server=[], timeperiod=[]):
+async def _stats(ctx: SlashContext, user, server="", timeperiod=""):
     await ctx.respond()
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
@@ -347,8 +378,6 @@ async def _stats(ctx: SlashContext, user, server=[], timeperiod=[]):
 
     if user:
         print(user)
-
-        time_periods = ["OVERALL", "24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']
         sent_username = user
         player_sent_server = server
         sent_time_period = timeperiod
@@ -553,6 +582,80 @@ async def marks(ctx, *args):
             await ctx.send('Invalid Tank Name')
             return
         await ctx.send(embed=user_tank.get_moe_embed())
+@slash.slash(name='ranks',description="WoT Hall of Fame Rankings",options=[
+    manage_commands.create_option(name='User',description="Player's Username",option_type=3,required=True),
+    manage_commands.create_option(name='Server',
+                                  description='Server To search aganist.',
+                                  choices=[{"name": "na", "value": "na"},
+                                           {"name": "eu", "value": "eu"},
+                                           {"name": "asia", "value": "asia"}],
+                                  option_type=3, required=False),
+])
+async def _ranks(ctx: SlashContext,User,Server=""):
+    await ctx.respond()
+    api_key = '20e1e0e4254d98635796fc71f2dfe741'
+    api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
+    def find_server(username):
+
+        search_na = requests.get(api_url.format('com', api_key, username)).json()
+
+        if search_na['status'] != "error" and search_na['meta']['count'] != 0:
+            stats_user_id = search_na['data'][0]['account_id']
+
+            return stats_user_id, 'com'
+        else:
+
+            search_eu = requests.get(api_url.format('eu', api_key, username)).json()
+
+            if search_eu['status'] != "error" and search_eu['meta']['count'] != 0:
+                stats_user_id = search_eu['data'][0]['account_id']
+
+                return stats_user_id, 'eu'
+            else:
+
+                search_asia = requests.get(api_url.format('asia', api_key, username)).json()
+                if search_asia['status'] != "error" and search_asia['meta']['count'] != 0:
+                    stats_user_id = search_asia['data'][0]['account_id']
+                    return stats_user_id, 'asia'
+                else:
+                    raise Exception
+    if User:
+        print(User)
+        sent_username = User
+        player_sent_server = Server
+
+        if player_sent_server:
+            server_passed = True
+            if player_sent_server == 'na':
+                user_server = 'com'
+            else:
+                user_server = player_sent_server
+        else:
+            server_passed = False
+
+        if server_passed:
+            search_for_id_json = requests.get(api_url.format(user_server, api_key, sent_username)).json()
+            if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
+                await ctx.send('Missing api data: Try again')
+            else:
+                user_id = search_for_id_json['data'][0]['account_id']
+        else:
+            try:
+                user_id, user_server = find_server(sent_username)
+
+            except Exception:
+                await ctx.send('Invalid Username (All servers)')
+                return
+
+        try:
+
+            user_instance = PlayerStats(user_id, user_server, sent_username, api_key)
+        except requests.exceptions.Timeout:
+            await ctx.send('api timeout: invalid user?')
+            return
+        except Exception:
+            await ctx.send('I have no idea what broke')
+        await ctx.send(embed=user_instance.get_main_ranking())
 
 
 client.run(TOKEN)
