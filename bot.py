@@ -582,7 +582,7 @@ async def marks(ctx, *args):
             await ctx.send('Invalid Tank Name')
             return
         await ctx.send(embed=user_tank.get_moe_embed())
-@slash.slash(name='ranks',description="WoT Hall of Fame Rankings",options=[
+@slash.slash(name='Ranks',description="WoT Hall of Fame Rankings",options=[
     manage_commands.create_option(name='user',description="Player's Username",option_type=3,required=True),
     manage_commands.create_option(name='server',
                                   description='Server To search aganist.',
