@@ -49,7 +49,7 @@ class TankData:
         return self.moeEmbed
 
 
-# Put your server ID in this array.
+
 colorRatingNew = {
     "very_bad": 0x7d1930,
     "bad": 0xf11919,
