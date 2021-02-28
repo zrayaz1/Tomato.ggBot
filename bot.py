@@ -474,4 +474,12 @@ async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):
         await ctx.send('I have no idea what broke')
     await ctx.send(embed=user_instance.get_main_ranking())
 
+@client.command()
+async def servers(ctx):
+    activeservers = client.guilds
+    for guild in activeservers:
+        await ctx.send(guild.name)
+        print(guild.name)
+
+
 client.run(TOKEN)
