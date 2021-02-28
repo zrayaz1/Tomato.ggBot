@@ -480,6 +480,8 @@ async def servers(ctx):
     for guild in activeservers:
         await ctx.send(guild.name)
         print(guild.name)
-
+@client.command()
+async def wotlabs(ctx):
+    await ctx.send(embed=Embed(title='Wotlabs Sucks'))
 
 client.run(TOKEN)
