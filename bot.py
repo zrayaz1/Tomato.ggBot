@@ -478,7 +478,6 @@ async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):
 async def servers(ctx):
     activeservers = client.guilds
     for guild in activeservers:
-        await ctx.send(guild.name)
         print(guild.name)
 @client.command()
 async def wotlabs(ctx):
