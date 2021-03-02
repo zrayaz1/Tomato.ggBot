@@ -300,7 +300,7 @@ class PlayerStats:
                               color=get_wn8_color(data['overallWN8']),
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
         except Exception:
-            return Embed(title='Invalid Name')
+            return Embed(title='No Data')
         for tank in top_six:
             tankEmbed.add_field(name=tank['name'],
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
