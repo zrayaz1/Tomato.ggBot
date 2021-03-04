@@ -173,7 +173,10 @@ class TankData:
 
 class PlayerStats:
     def __init__(self, user_id: str, server: str, name: str, wot_api_key: str):
-
+        if name.upper() == "SMMC4U":
+            self.is_smmc4u = True
+        else:
+            self.is_smmc4u = False
         if server == 'com':
             self.defaultTimeOut = 8
         else:
@@ -256,9 +259,18 @@ class PlayerStats:
                               color=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
             default_stats_embed.set_thumbnail(url=self.clanIconUrl)
+            if self.is_smmc4u:
+                default_stats_embed = Embed(title=self.startTitleStr,
+                                            description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
+                                            color=get_wn8_color(250),
+                                            url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+                default_stats_embed.set_thumbnail(url=self.clanIconUrl)
         else:
             default_stats_embed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+            if self.is_smmc4u:
+                default_stats_embed = Embed(title=self.startTitleStr, colour=get_wn8_color(250),
+                                            url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
 
         for time_period in list(dataList.keys()):
             values = list(dict(list(dataList[time_period].items())[0:4]).values())
@@ -295,10 +307,17 @@ class PlayerStats:
 
         top_six = sorted_tank_data[0:6]
         try:
-            tankEmbed = Embed(title=self.startTitleStr,
+            if self.is_smmc4u:
+                tankEmbed = Embed(title=self.startTitleStr,
+                              description=f"**Last {period} Stats**",
+                              color=get_wn8_color(250),
+                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+            else:
+                tankEmbed = Embed(title=self.startTitleStr,
                               description=f"**Last {period} Stats**",
                               color=get_wn8_color(data['overallWN8']),
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+
         except Exception:
             return Embed(title='No Data')
         for tank in top_six:
