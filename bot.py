@@ -294,17 +294,22 @@ class PlayerStats:
 
         sorted_tank_data = sorted(data['tankStats'], key=lambda item: item['battles'], reverse=True)
 
-        top_six = sorted_tank_data[0:6]
+        top_x_tanks = sorted_tank_data[0:5]
         try:
-
             tankEmbed = Embed(title=self.startTitleStr,
-                          description=f"**Last {period} Stats**",
-                          color=get_wn8_color(data['overallWN8']),
-                          url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
-
+                              description=f"**Last {period} Stats**",
+                              color=get_wn8_color(data['overallWN8']),
+                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
         except Exception:
-            return Embed(title='No Data')
-        for tank in top_six:
+            return Embed(title='Invalid Name')
+        values = list(dict(list(data_list[period.upper()].items())[0:4]).values())
+        recentBattles = int(values[0])
+        recentsWins = data_list[period.upper()]['wins']
+        recentWinRate = recentsWins / recentBattles
+        recentWinRatePercent = "{:.1%}".format(recentWinRate)
+        tankEmbed.add_field(name='Totals',
+                            value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
+        for tank in top_x_tanks:
             tankEmbed.add_field(name=tank['name'],
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
         return tankEmbed

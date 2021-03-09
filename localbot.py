@@ -16,6 +16,7 @@ client = commands.Bot(command_prefix='$')
 slash = SlashCommand(client, sync_commands=True)
 guild_ids = [719707418833190995]
 
+
 def format_time_for_slash():
     list_of_time_dicts = []
     for time_period_no_overall in ["24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']:
@@ -252,13 +253,13 @@ class PlayerStats:
         self.startTitleStr = f"{self.userName.capitalize()}'s Stats"
         if self.isInClan:
             default_stats_embed = Embed(title=self.startTitleStr,
-                              description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
-                              color=self.overallWN8Color,
-                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+                                        description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
+                                        color=self.overallWN8Color,
+                                        url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
             default_stats_embed.set_thumbnail(url=self.clanIconUrl)
         else:
             default_stats_embed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
-                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+                                        url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
 
         for time_period in list(dataList.keys()):
             values = list(dict(list(dataList[time_period].items())[0:4]).values())
@@ -267,8 +268,8 @@ class PlayerStats:
                 winrate = int(self.total_wins) / int(self.total_battles)
                 winRatePercent = "{:.1%}".format(winrate)
                 default_stats_embed.add_field(name=f"**{time_period}**",
-                                    value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
-                                    inline=True)
+                                              value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
+                                              inline=True)
             else:
                 recentBattles = int(values[0])
                 recentsWins = dataList[time_period]['wins']
@@ -279,9 +280,9 @@ class PlayerStats:
                 else:
                     recentWinRatePercent = '-'
                 default_stats_embed.add_field(name=time_period,
-                                    value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
+                                              value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
         default_stats_embed.set_footer(text='Powered by Tomato.gg',
-                             icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
+                                       icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
 
         return default_stats_embed
 
@@ -293,7 +294,7 @@ class PlayerStats:
 
         sorted_tank_data = sorted(data['tankStats'], key=lambda item: item['battles'], reverse=True)
 
-        top_six = sorted_tank_data[0:6]
+        top_x_tanks = sorted_tank_data[0:5]
         try:
             tankEmbed = Embed(title=self.startTitleStr,
                               description=f"**Last {period} Stats**",
@@ -301,7 +302,13 @@ class PlayerStats:
                               url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
         except Exception:
             return Embed(title='Invalid Name')
-        for tank in top_six:
+        values = list(dict(list(data_list[period.upper()].items())[0:4]).values())
+        recentBattles = int(values[0])
+        recentsWins = data_list[period.upper()]['wins']
+        recentWinRate = recentsWins / recentBattles
+        recentWinRatePercent = "{:.1%}".format(recentWinRate)
+        tankEmbed.add_field(name='Totals',value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
+        for tank in top_x_tanks:
             tankEmbed.add_field(name=tank['name'],
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
         return tankEmbed
@@ -314,10 +321,12 @@ class PlayerStats:
         if self.isInClan:
             main_ranking_embed = Embed(
                 title=f"{self.userName.capitalize()}'s Ranking ",
-                description=f"**{self.shortClanPosition} at [{self.clanName.upper()}]**", colour=self.ranking_color,url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}?page=hall-of-fame')
+                description=f"**{self.shortClanPosition} at [{self.clanName.upper()}]**", colour=self.ranking_color,
+                url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}?page=hall-of-fame')
             main_ranking_embed.set_thumbnail(url=self.clanIconUrl)
         else:
-            main_ranking_embed = Embed(title=f"{self.userName.capitalize()}'s Ranking ", colour=self.ranking_color,url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}?page=hall-of-fame')
+            main_ranking_embed = Embed(title=f"{self.userName.capitalize()}'s Ranking ", colour=self.ranking_color,
+                                       url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}?page=hall-of-fame')
         for section in self.ranking_data['top']:
 
             if section not in ['total', 'battles', 'dmg_ratio']:
@@ -334,9 +343,13 @@ class PlayerStats:
 
     def get_tanks_ranking(self):
         pass
+
+
 update_vehicles_data()
 update_mark_data()
 print('data up to date')
+
+
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game(name='/stats or /marks'))
@@ -352,7 +365,8 @@ async def on_ready():
                                                     option_type=3, required=False),
                       manage_commands.create_option(name='timeperiod',
                                                     description='Options: 24h, 7days, 30days, 60days, 1000battles.',
-                                                    choices=format_time_for_slash(), option_type=3, required=False)],guild_ids=guild_ids
+                                                    choices=format_time_for_slash(), option_type=3, required=False)],
+             guild_ids=guild_ids
              )
 async def _stats(ctx: SlashContext, sent_user_name, sent_server="", timeperiod=""):
     await ctx.respond()
@@ -476,3 +490,4 @@ async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):
 
 
 client.run(localTOKEN)
+
