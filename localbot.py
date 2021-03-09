@@ -352,7 +352,7 @@ async def on_ready():
                                                     option_type=3, required=False),
                       manage_commands.create_option(name='timeperiod',
                                                     description='Options: 24h, 7days, 30days, 60days, 1000battles.',
-                                                    choices=format_time_for_slash(), option_type=3, required=False)]
+                                                    choices=format_time_for_slash(), option_type=3, required=False)],guild_ids=guild_ids
              )
 async def _stats(ctx: SlashContext, sent_user_name, sent_server="", timeperiod=""):
     await ctx.respond()

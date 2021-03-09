@@ -177,7 +177,7 @@ class PlayerStats:
         if server == 'com':
             self.defaultTimeOut = 8
         else:
-            self.defaultTimeOut = 20
+            self.defaultTimeOut = 120
         self.clanApiUrl = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wot_api_key}&account_id={user_id}'
         self.apiKey = wot_api_key
         self.server = server
