@@ -394,8 +394,9 @@ async def _stats(ctx: SlashContext, sent_user_name, sent_server="", timeperiod="
     except requests.exceptions.Timeout:
         await ctx.send('api timeout: invalid user?')
         return
-    except Exception:
+    except Exception as e:
         await ctx.send('I have no idea what broke')
+        print(e)
 
     if timeperiod:
         await ctx.send(embed=user_instance.get_tank_stats(timeperiod))
