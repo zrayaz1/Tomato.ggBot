@@ -368,13 +368,17 @@ async def on_ready():
                                                     choices=format_time_for_slash(), option_type=3, required=False)],
              guild_ids=guild_ids
              )
-async def _stats(ctx: SlashContext, sent_user_name, sent_server="", timeperiod=""):
+async def _stats(ctx: SlashContext,*args):
+    server_list = ['na','eu','asia']
+    timeperiod_list = ['24h', '7days', '30days', '60days', '1000battles']
     await ctx.respond()
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
-
+    sent_server = [i for i in args if i in server_list]
+    sent_user_name = args[0]
+    timeperiod = [i for i in args if i in timeperiod_list]
     if sent_server:
-
+        sent_server = sent_server[0]
         if sent_server == 'na':
             parsed_server = 'com'
         else:
@@ -394,16 +398,17 @@ async def _stats(ctx: SlashContext, sent_user_name, sent_server="", timeperiod="
             await ctx.send('Invalid Username (All servers)')
             return
 
-    try:
 
-        user_instance = PlayerStats(user_id, parsed_server, sent_user_name, api_key)
-    except requests.exceptions.Timeout:
-        await ctx.send('api timeout: invalid user?')
-        return
-    except Exception:
-        await ctx.send('I have no idea what broke')
+
+    user_instance = PlayerStats(user_id, parsed_server, sent_user_name, api_key)
+    # except requests.exceptions.Timeout:
+    #     await ctx.send('api timeout: invalid user?')
+    #     return
+    # except Exception:
+    #     await ctx.send('I have no idea what broke')
 
     if timeperiod:
+        timeperiod = timeperiod[0]
         await ctx.send(embed=user_instance.get_tank_stats(timeperiod))
         return
 
