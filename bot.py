@@ -187,7 +187,7 @@ class PlayerStats:
             self.parsedServer = self.server
         self.userName = name
         self.sealClubber = False
-        api_url = 'https://tomatobackend.herokuapp.com/api/abcd/{}/{}'
+        api_url = 'https://tomatobackend.herokuapp.com/api/player/{}/{}'
         self.userId = user_id
         self.userUrl = api_url.format(server, user_id)
 
@@ -407,8 +407,8 @@ async def _stats(ctx: SlashContext,*args):
         timeperiod = timeperiod[0]
         await ctx.send(embed=user_instance.get_tank_stats(timeperiod))
         return
-
-    my_embed = user_instance.get_default_stats()
+    if user_instance:
+        my_embed = user_instance.get_default_stats()
 
     await ctx.send(embed=my_embed)
 
