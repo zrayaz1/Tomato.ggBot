@@ -9,9 +9,9 @@ from bot_functions import tank_data, format_time, format_regions, get_tank_list,
 import os
 tank_data = tank_data()
 
-TOKEN = os.environ.get('TOKEN')
+# TOKEN = os.environ.get('TOKEN')
 localTOKEN = os.environ.get('LOCAL_TOKEN')
-
+print(localTOKEN)
 client = commands.Bot(command_prefix='$',activity=discord.Game(name='test'))
 slash = SlashCommand(client, sync_commands=True)
 guild_ids = [719707418833190995]
