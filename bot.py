@@ -5,12 +5,12 @@ from discord.ext import commands
 from fuzzywuzzy import process
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils import manage_commands
-
+import os
 na_image_and_tank_info, eu_image_and_tank_info, asia_image_and_tank_info = {}, {}, {}
 na_moe_data, eu_moe_data, asia_moe_data = {}, {}, {}
 na_mastery_data, eu_mastery_data, asia_mastery_data = {}, {}, {}
-TOKEN = 'Nzk1MTM4MTQ1MTA0MTY2OTEy.X_FAGg.Z99hiYDDt8DPMpWQRN_nr5wFedU'
-localTOKEN = 'Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.CAAz-_qetCkJAV6y4C4VjbKTSCA'
+
+TOKEN = os.environ.get('TOKEN')
 
 client = commands.Bot(command_prefix='$')
 slash = SlashCommand(client, sync_commands=True)
