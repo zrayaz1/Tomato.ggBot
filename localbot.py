@@ -5,13 +5,13 @@ from fuzzywuzzy import process
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils import manage_commands
 import requests
-from bot_functions import tank_data, format_time, format_regions, get_tank_list, get_wn8_color, get_short_hand, find_server
+from bot_functions import tank_data, get_tank_list, get_wn8_color, get_short_hand, find_server, format_slash_choices
 import os
 tank_data = tank_data()
-
+server_list = ['na', 'eu', 'asia']
+timeperiod_list = ['24h', '7days', '30days', '60days', '1000battles']
 # TOKEN = os.environ.get('TOKEN')
-localTOKEN = os.environ.get('LOCAL_TOKEN')
-print(localTOKEN)
+localTOKEN = "Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.3DlCfqo8Plnzi_k10YXEBJwnIis"
 client = commands.Bot(command_prefix='$',activity=discord.Game(name='test'))
 slash = SlashCommand(client, sync_commands=True)
 guild_ids = [719707418833190995]
@@ -42,7 +42,7 @@ class tank_data_formatter:
             self.server_name = self.server
         self.moeEmbed = Embed(title=f"{self.tank} {self.server_name.upper()}")
 
-    def get_moe_embed(self):
+    def get_moe_embed(self) -> Embed:
         self.moeEmbed.add_field(name='Marks(Dmg + Track/Spot)',
                                 value=f"1 Mark: `{self.markData['65']}`\n2 Mark: `{self.markData['85']}`\n3 Mark: `{self.markData['95']}`\n100% MoE: `{self.markData['100']}`")
         self.moeEmbed.add_field(name='Mastery(XP)',
@@ -126,7 +126,7 @@ class PlayerStats:
                         value=f"3 Marks: `{self.tier10ThreeMarks}`\n2 Marks: `{self.tier10TwoMarks}`\n 1 Marks: `{self.tier10OneMarks}`")
         return embed
 
-    def get_default_stats(self):
+    def get_default_stats(self) -> Embed:
 
         dataList = {"overall": self.overallStats, "24h": self.recent24hr, "7 days": self.recent7days,
                     '30 days': self.recent30days, '60 Days': self.recent60days, '1000 Battles': self.recent1000}
@@ -167,7 +167,7 @@ class PlayerStats:
 
         return default_stats_embed
 
-    def get_tank_stats(self, period):
+    def get_tank_stats(self, period: str) -> Embed:
         data_list = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
                      '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
 
@@ -195,7 +195,7 @@ class PlayerStats:
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
         return tankEmbed
 
-    def get_main_ranking(self):
+    def get_main_ranking(self) -> Embed:
         main_ranking_api_url = "https://tomatobackend.herokuapp.com/api/hofmain/{}/{}".format(self.server, self.userId)
 
         self.ranking_data = requests.get(main_ranking_api_url).json()
@@ -241,15 +241,13 @@ async def on_ready():
                                                     required=True),
                       manage_commands.create_option(name='server',
                                                     description='Server To search aganist. Options: na, eu, asia.',
-                                                    choices=format_regions(),
+                                                    choices=format_slash_choices(server_list),
                                                     option_type=3, required=False),
                       manage_commands.create_option(name='timeperiod',
                                                     description='Options: 24h, 7days, 30days, 60days, 1000battles.',
-                                                    choices=format_time(), option_type=3, required=False)]
+                                                    choices=format_slash_choices(timeperiod_list), option_type=3, required=False)]
              )
 async def _stats(ctx: SlashContext, *args):
-    server_list = ['na', 'eu', 'asia']
-    timeperiod_list = ['24h', '7days', '30days', '60days', '1000battles']
     await ctx.respond()
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
@@ -283,7 +281,7 @@ async def _stats(ctx: SlashContext, *args):
 
 
     if timeperiod:
-        timeperiod = timeperiod[0]
+        timeperiod: str = timeperiod[0]
         await ctx.send(embed=user_instance.get_tank_stats(timeperiod))
         return
 
@@ -296,7 +294,7 @@ async def _stats(ctx: SlashContext, *args):
              options=[
                  manage_commands.create_option(name='tank', description='Name of Tank', option_type=3, required=True),
                  manage_commands.create_option(name='server', description='Options: na, eu, asia. Defaults to na',
-                                               choices=format_regions(), option_type=3,
+                                               choices=format_slash_choices(server_list), option_type=3,
                                                required=False)]
              )
 async def _marks(ctx: SlashContext, tank, server='na'):
@@ -334,7 +332,7 @@ async def _marks(ctx: SlashContext, tank, server='na'):
     manage_commands.create_option(name='user', description="Player's Username", option_type=3, required=True),
     manage_commands.create_option(name='server',
                                   description='Server To search against.',
-                                  choices=format_regions(),
+                                  choices=format_slash_choices(server_list),
                                   option_type=3, required=False),
 ])
 async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):

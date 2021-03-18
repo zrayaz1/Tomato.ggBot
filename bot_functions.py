@@ -1,5 +1,6 @@
 import requests
 import aiohttp
+from typing import Tuple, List
 
 
 class tank_data:
@@ -21,12 +22,12 @@ class tank_data:
         self.eu_mastery_data = requests.get("https://mastery.poliroid.ru/api/eu/vehicles").json()
         self.asia_mastery_data = requests.get("https://mastery.poliroid.ru/api/asia/vehicles").json()
 
-def format_time():
-    list_of_time_dicts = []
-    for time_period_no_overall in ["24H", "7DAYS", '30DAYS', '60DAYS', '1000BATTLES']:
-        time_choices_dict = {'name': time_period_no_overall.lower(), 'value': time_period_no_overall.lower()}
-        list_of_time_dicts.append(time_choices_dict)
-    return list_of_time_dicts
+def format_slash_choices(input: list) -> List[dict]:
+    dicts = []
+    for item in input:
+        formatted = {'name': item.lower(), 'value': item.lower()}
+        dicts.append(formatted)
+    return dicts
 def format_regions():
     list_of_regions_dicts = []
     for region in ['na', 'eu', 'asia']:
@@ -49,7 +50,7 @@ def get_tank_list(server,na_api,eu_api,asia_api):
             server_to_data[server]['data'][tank_data_from_server]['name']
     return tank_list, short_name_list, short_and_long_list, short_to_long_dict
 
-def get_wn8_color(wn8: int):
+def get_wn8_color(wn8: int) -> int:
     if wn8 < 300:
         return 0x930D0D
     elif wn8 < 450:
@@ -80,7 +81,7 @@ def get_wn8_color(wn8: int):
         return 0x24073d
 
 
-def get_short_hand(position):
+def get_short_hand(position: str) -> str:
     short_positions = {'executive_officer': 'XO',
                        'commander': 'CDR',
                        'personnel_officer': 'PO',
@@ -95,7 +96,7 @@ def get_short_hand(position):
                        }
     return short_positions[position]
 
-async def find_server(username, api_url, api_key):
+async def find_server(username: str, api_url: str, api_key: str) -> Tuple[int, str]:
     async with aiohttp.ClientSession() as session:
         async with session.get(api_url.format('com', api_key, username)) as na_search:
             if na_search.status == 200:
