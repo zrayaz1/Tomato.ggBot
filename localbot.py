@@ -11,7 +11,7 @@ tank_data = tank_data()
 server_list = ['na', 'eu', 'asia']
 timeperiod_list = ['24h', '7days', '30days', '60days', '1000battles']
 # TOKEN = os.environ.get('TOKEN')
-localTOKEN = "Nzg2Njk4ODg1MzI2MzA3MzU4.X9KMbg.3DlCfqo8Plnzi_k10YXEBJwnIis"
+localTOKEN = os.environ.get('LOCAL_TOKEN')
 client = commands.Bot(command_prefix='$',activity=discord.Game(name='test'))
 slash = SlashCommand(client, sync_commands=True)
 guild_ids = [719707418833190995]
