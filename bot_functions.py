@@ -3,17 +3,19 @@ import aiohttp
 from typing import Tuple, List
 
 
-class tank_data:
+class TankData:
     def __init__(self):
         self.tank_info_api_url = "https://api.worldoftanks.{}/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier"
         self.na_image_and_tank_info, self.eu_image_and_tank_info, self.asia_image_and_tank_info = {}, {}, {}
         self.na_moe_data, self.eu_moe_data, self.asia_moe_data, self.na_mastery_data, self.eu_mastery_data, self.asia_mastery_data = {}, {}, {}, {}, {}, {}
         self.update_vehicles_data()
         self.update_mark_data()
+
     def update_vehicles_data(self):
         self.na_image_and_tank_info = requests.get(self.tank_info_api_url.format('com')).json()
         self.eu_image_and_tank_info = requests.get(self.tank_info_api_url.format('eu')).json()
         self.asia_image_and_tank_info = requests.get(self.tank_info_api_url.format('asia')).json()
+
     def update_mark_data(self):
         self.na_moe_data = requests.get("https://gunmarks.poliroid.ru/api/com/vehicles/65,85,95,100").json()
         self.eu_moe_data = requests.get("https://gunmarks.poliroid.ru/api/eu/vehicles/65,85,95,100").json()
@@ -22,33 +24,28 @@ class tank_data:
         self.eu_mastery_data = requests.get("https://mastery.poliroid.ru/api/eu/vehicles").json()
         self.asia_mastery_data = requests.get("https://mastery.poliroid.ru/api/asia/vehicles").json()
 
-def format_slash_choices(input: list) -> List[dict]:
+
+def format_slash_choices(choices_input: list) -> List[dict]:
     dicts = []
-    for item in input:
+    for item in choices_input:
         formatted = {'name': item.lower(), 'value': item.lower()}
         dicts.append(formatted)
     return dicts
-def format_regions():
-    list_of_regions_dicts = []
-    for region in ['na', 'eu', 'asia']:
-        regions_dict = {"name": region.lower(), 'value': region.lower()}
-        list_of_regions_dicts.append(regions_dict)
-    return list_of_regions_dicts
 
-def get_tank_list(server,na_api,eu_api,asia_api):
+
+def get_tank_list(server: str, na_api, eu_api, asia_api) -> Tuple[List, List, List, dict]:
     server_to_data = {'com': na_api, 'eu': eu_api, 'asia': asia_api}
     tank_list = [server_to_data[server]['data'][i]['name'] for i in server_to_data[server]['data'] if
                  server_to_data[server]['data'][i]['tier'] >= 5]
     short_name_list = [server_to_data[server]['data'][i]['short_name'] for i in server_to_data[server]['data'] if
                        server_to_data[server]['data'][i]['tier'] >= 5]
-
     short_and_long_list = tank_list + short_name_list
-
-    short_to_long_dict = {}
+    short_name_to_long = {}
     for tank_data_from_server in server_to_data[server]['data']:
-        short_to_long_dict[server_to_data[server]['data'][tank_data_from_server]['short_name']] = \
+        short_name_to_long[server_to_data[server]['data'][tank_data_from_server]['short_name']] = \
             server_to_data[server]['data'][tank_data_from_server]['name']
-    return tank_list, short_name_list, short_and_long_list, short_to_long_dict
+    return tank_list, short_name_list, short_and_long_list, short_name_to_long
+
 
 def get_wn8_color(wn8: int) -> int:
     if wn8 < 300:
@@ -95,6 +92,7 @@ def get_short_hand(position: str) -> str:
                        'reservist': 'RES'
                        }
     return short_positions[position]
+
 
 async def find_server(username: str, api_url: str, api_key: str) -> Tuple[int, str]:
     async with aiohttp.ClientSession() as session:

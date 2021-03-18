@@ -5,25 +5,22 @@ from fuzzywuzzy import process
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils import manage_commands
 import requests
-from bot_functions import tank_data, get_tank_list, get_wn8_color, get_short_hand, find_server, format_slash_choices
+from typing import Dict, List
+from bot_functions import TankData, get_tank_list, get_wn8_color, get_short_hand, find_server, format_slash_choices
 import os
-tank_data = tank_data()
+
+tank_data: TankData = TankData()
 server_list = ['na', 'eu', 'asia']
-timeperiod_list = ['24h', '7days', '30days', '60days', '1000battles']
+timeperiod_list: List[str] = ['24h', '7days', '30days', '60days', '1000battles']
 TOKEN = os.environ.get('TOKEN')
-# localTOKEN = os.environ.get('LOCAL_TOKEN')
-client = commands.Bot(command_prefix='$',activity=discord.Game(name='/'))
+client = commands.Bot(command_prefix='$', activity=discord.Game(name='test'))
 slash = SlashCommand(client, sync_commands=True)
-guild_ids = [719707418833190995]
-
-
-
-
-class tank_data_formatter:
+class TankDataFormatter:
     def __init__(self, sent_tank, server="com"):
-        server_to_data = {'com': [tank_data.na_image_and_tank_info, tank_data.na_moe_data, tank_data.na_mastery_data],
-                          'eu': [tank_data.eu_image_and_tank_info, tank_data.eu_moe_data, tank_data.eu_mastery_data],
-                          'asia': [tank_data.asia_image_and_tank_info, tank_data.asia_moe_data, tank_data.asia_mastery_data]}
+        server_to_data: Dict[str, List[dict]] = {
+            'com': [TankData.na_image_and_tank_info, TankData.na_moe_data, TankData.na_mastery_data],
+            'eu': [TankData.eu_image_and_tank_info, TankData.eu_moe_data, TankData.eu_mastery_data],
+            'asia': [TankData.asia_image_and_tank_info, TankData.asia_moe_data, TankData.asia_mastery_data]}
         self.tank = sent_tank
         self.server = server
         self.data = server_to_data[self.server]
@@ -33,9 +30,12 @@ class tank_data_formatter:
                 for x in self.data[1]['data']:
                     if str(x['id']) == str(self.tankId):
                         self.markData = x['marks']
+                        break
                 for tank in self.data[2]["data"]:
                     if tank['id'] == int(self.tankId):
                         self.masteryData = tank['mastery']
+                        break
+                break
         if self.server == 'com':
             self.server_name = 'na'
         else:
@@ -54,93 +54,57 @@ class tank_data_formatter:
 
 class PlayerStats:
     def __init__(self, user_id: str, server: str, name: str, wot_api_key: str):
-
         if server == 'com':
-            self.defaultTimeOut = 8
+            self.time_out_duration = 8
         else:
-            self.defaultTimeOut = 120
-        self.clanApiUrl = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wot_api_key}&account_id={user_id}'
-        self.apiKey = wot_api_key
-        self.server = server
-        if self.server == 'com':
-            self.parsedServer = 'NA'
+            self.time_out_duration = 120
+        self.clan_api_url = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wot_api_key}&account_id={user_id}'
+        self.wot_api_key = wot_api_key
+        self.url_domain = server
+        if self.url_domain == 'com':
+            self.server = 'NA'
         else:
-            self.parsedServer = self.server
-        self.userName = name
-        self.sealClubber = False
-        api_url = 'https://tomatobackend.herokuapp.com/api/player/{}/{}'
-        self.userId = user_id
-        self.userUrl = api_url.format(server, user_id)
-
-        self.jsonOutput = requests.get(self.userUrl, timeout=self.defaultTimeOut).json()
-
-        self.overallStats = self.jsonOutput['overallStats']
-        self.tankWN8 = self.overallStats['tankWN8']
-        self.recent24hr = self.jsonOutput['recents']['recent24hr']
-        self.recent3days = self.jsonOutput['recents']['recent3days']
-        self.recent7days = self.jsonOutput['recents']['recent7days']
-        self.recent30days = self.jsonOutput['recents']['recent30days']
-        self.recent60days = self.jsonOutput['recents']['recent60days']
-        self.recent1000 = self.jsonOutput['recents']['recent1000']
-        self.overallWN8 = self.overallStats['overallWN8']
-        self.clanId = ''
-        self.overallWN8Color = get_wn8_color(self.overallWN8)
-        self.oneMarks = 0
-        self.twoMarks = 0
-        self.threeMarks = 0
-        self.tier10ThreeMarks = 0
-        self.tier10TwoMarks = 0
-        self.tier10OneMarks = 0
-        self.total_battles = self.jsonOutput["overall"]['battles']
-        self.total_wins = self.jsonOutput["overall"]['wins']
-        for tank in self.tankWN8:
-            if tank['moe'] != 0:
-                if tank['moe'] == 1:
-                    self.oneMarks += 1
-                    if tank['tier'] == 10:
-                        self.tier10OneMarks += 1
-                elif tank['moe'] == 2:
-                    self.twoMarks += 1
-                    if tank['tier'] == 10:
-                        self.tier10TwoMarks += 1
-                elif tank['moe'] == 3:
-                    self.threeMarks += 1
-                    if tank['tier'] == 10:
-                        self.tier10ThreeMarks += 1
-        self.startTitleStr = f"{self.userName.capitalize()}'s Stats"
-        clan_data = requests.get(self.clanApiUrl).json()['data']
-        if clan_data[str(self.userId)] is None:
-            self.isInClan = False
+            self.server = self.url_domain
+        self.user_name = name
+        tomato_player_api_url = 'https://tomatobackend.herokuapp.com/api/player/{}/{}'
+        self.user_id = user_id
+        self.user_url = tomato_player_api_url.format(server, user_id)
+        self.tomato_api_json = requests.get(self.user_url, timeout=self.time_out_duration).json()
+        self.overall_stats = self.tomato_api_json['overallStats']
+        self.tank_wn8 = self.overall_stats['tankWN8']
+        self.recent_24hr = self.tomato_api_json['recents']['recent24hr']
+        self.recent_3days = self.tomato_api_json['recents']['recent3days']
+        self.recent_7days = self.tomato_api_json['recents']['recent7days']
+        self.recent_30days = self.tomato_api_json['recents']['recent30days']
+        self.recent_60days = self.tomato_api_json['recents']['recent60days']
+        self.recent_1000 = self.tomato_api_json['recents']['recent1000']
+        self.overall_wn8: int = self.overall_stats['overallWN8']
+        self.total_battles: int = self.tomato_api_json["overall"]['battles']
+        self.total_wins: int = self.tomato_api_json["overall"]['wins']
+        self.clan_data = requests.get(self.clan_api_url).json()['data']
+        if self.clan_data[str(self.user_id)] is None:
+            self.isInClan: bool = False
         else:
             self.isInClan = True
-            self.clanName = clan_data[str(self.userId)]['clan']['tag']
-            self.clanIconUrl = clan_data[str(self.userId)]['clan']['emblems']['x64']['portal']
-            self.clanPosition = clan_data[str(self.userId)]['role']
-            self.shortClanPosition = get_short_hand(self.clanPosition)
-
-    def get_marks(self):
-        embed = Embed(title=f"{self.userName}'s Marks", color=self.overallWN8Color)
-        embed.add_field(name='Total Marks',
-                        value=f"3 Marks: `{self.threeMarks}`\n2 Marks: `{self.twoMarks}`\n 1 Marks: `{self.oneMarks}`")
-        embed.add_field(name='Tier 10 Marks',
-                        value=f"3 Marks: `{self.tier10ThreeMarks}`\n2 Marks: `{self.tier10TwoMarks}`\n 1 Marks: `{self.tier10OneMarks}`")
-        return embed
+            self.clan_name: str = self.clan_data[str(self.user_id)]['clan']['tag']
+            self.clanIconUrl: str = self.clan_data[str(self.user_id)]['clan']['emblems']['x64']['portal']
+            self.clanPosition: str = self.clan_data[str(self.user_id)]['role']
+            self.shortClanPosition: str = get_short_hand(self.clanPosition)
 
     def get_default_stats(self) -> Embed:
 
-        dataList = {"overall": self.overallStats, "24h": self.recent24hr, "7 days": self.recent7days,
-                    '30 days': self.recent30days, '60 Days': self.recent60days, '1000 Battles': self.recent1000}
-        self.startTitleStr = f"{self.userName.capitalize()}'s Stats"
+        dataList = {"overall": self.overall_stats, "24h": self.recent_24hr, "7 days": self.recent_7days,
+                    '30 days': self.recent_30days, '60 Days': self.recent_60days, '1000 Battles': self.recent_1000}
         if self.isInClan:
-            default_stats_embed = Embed(title=self.startTitleStr,
-                                        description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clanName}]" + "**",
-                                        color=self.overallWN8Color,
-                                        url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+            default_stats_embed = Embed(title=f"{self.user_name.capitalize()}'s Stats",
+                                        description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clan_name}]" + "**",
+                                        color=get_wn8_color(self.overall_wn8),
+                                        url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
             default_stats_embed.set_thumbnail(url=self.clanIconUrl)
 
         else:
-            default_stats_embed = Embed(title=self.startTitleStr, colour=self.overallWN8Color,
-                                        url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+            default_stats_embed = Embed(title=f"{self.user_name.capitalize()}'s Stats", colour=get_wn8_color(self.overall_wn8),
+                                        url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
 
         for time_period in list(dataList.keys()):
             values = list(dict(list(dataList[time_period].items())[0:4]).values())
@@ -167,9 +131,9 @@ class PlayerStats:
 
         return default_stats_embed
 
-    def get_tank_stats(self, period: str) -> Embed:
-        data_list = {"OVERALL": self.overallStats, "24H": self.recent24hr, "7DAYS": self.recent7days,
-                     '30DAYS': self.recent30days, '60DAYS': self.recent60days, '1000BATTLES': self.recent1000}
+    def get_timeperiod_stats(self, period: str) -> Embed:
+        data_list = {"OVERALL": self.overall_stats, "24H": self.recent_24hr, "7DAYS": self.recent_7days,
+                     '30DAYS': self.recent_30days, '60DAYS': self.recent_60days, '1000BATTLES': self.recent_1000}
 
         data = data_list[period.upper()]
 
@@ -177,10 +141,10 @@ class PlayerStats:
 
         top_x_tanks = sorted_tank_data[0:5]
         try:
-            tankEmbed = Embed(title=self.startTitleStr,
+            tankEmbed = Embed(title=f"{self.user_name.capitalize()}'s Stats",
                               description=f"**Last {period} Stats**",
                               color=get_wn8_color(data['overallWN8']),
-                              url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}')
+                              url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
         except Exception:
             return Embed(title='Invalid Name')
         values = list(dict(list(data_list[period.upper()].items())[0:4]).values())
@@ -196,19 +160,20 @@ class PlayerStats:
         return tankEmbed
 
     def get_main_ranking(self) -> Embed:
-        main_ranking_api_url = "https://tomatobackend.herokuapp.com/api/hofmain/{}/{}".format(self.server, self.userId)
+        main_ranking_api_url = "https://tomatobackend.herokuapp.com/api/hofmain/{}/{}".format(self.url_domain,
+                                                                                              self.user_id)
 
         self.ranking_data = requests.get(main_ranking_api_url).json()
         self.ranking_color = get_wn8_color(int(self.ranking_data['top']['wn8']['value']))
         if self.isInClan:
             main_ranking_embed = Embed(
-                title=f"{self.userName.capitalize()}'s Ranking ",
-                description=f"**{self.shortClanPosition} at [{self.clanName.upper()}]**", colour=self.ranking_color,
-                url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}?page=hall-of-fame')
+                title=f"{self.user_name.capitalize()}'s Ranking ",
+                description=f"**{self.shortClanPosition} at [{self.clan_name.upper()}]**", colour=self.ranking_color,
+                url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}?page=hall-of-fame')
             main_ranking_embed.set_thumbnail(url=self.clanIconUrl)
         else:
-            main_ranking_embed = Embed(title=f"{self.userName.capitalize()}'s Ranking ", colour=self.ranking_color,
-                                       url=f'http://tomato.gg/stats/{self.parsedServer}/{self.userName}={self.userId}?page=hall-of-fame')
+            main_ranking_embed = Embed(title=f"{self.user_name.capitalize()}'s Ranking ", colour=self.ranking_color,
+                                       url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}?page=hall-of-fame')
         for section in self.ranking_data['top']:
 
             if section not in ['total', 'battles', 'dmg_ratio']:
@@ -222,13 +187,6 @@ class PlayerStats:
                                       icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
 
         return main_ranking_embed
-
-    def get_tanks_ranking(self):
-        pass
-
-
-
-
 
 
 @client.event
@@ -245,28 +203,29 @@ async def on_ready():
                                                     option_type=3, required=False),
                       manage_commands.create_option(name='timeperiod',
                                                     description='Options: 24h, 7days, 30days, 60days, 1000battles.',
-                                                    choices=format_slash_choices(timeperiod_list), option_type=3, required=False)]
+                                                    choices=format_slash_choices(timeperiod_list), option_type=3,
+                                                    required=False)]
              )
 async def _stats(ctx: SlashContext, *args):
     await ctx.respond()
     api_key = '20e1e0e4254d98635796fc71f2dfe741'
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
-    sent_server = [i for i in args if i in server_list]
-    sent_user_name = args[0]
-    timeperiod = [i for i in args if i in timeperiod_list]
-    if sent_server:
-        sent_server = sent_server[0]
-        if sent_server == 'na':
-            parsed_server = 'com'
+    sent_servers: List[str] = [i for i in args if i in server_list]
+    sent_user_name: str = args[0]
+
+    sent_timeperiod: List[str] = [i for i in args if i in timeperiod_list]
+    if sent_servers:
+        server: str = sent_servers[0]
+        if server == 'na':
+            parsed_server: str = 'com'
         else:
-            parsed_server = sent_server
+            parsed_server = server
         search_for_id_json = requests.get(api_url.format(parsed_server, api_key, sent_user_name)).json()
         if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
             await ctx.send('Missing api data: Invalid username?')
             return
         else:
             user_id = search_for_id_json['data'][0]['account_id']
-
     else:
         try:
             user_id, parsed_server = await find_server(sent_user_name, api_url, api_key)
@@ -274,20 +233,17 @@ async def _stats(ctx: SlashContext, *args):
         except Exception:
             await ctx.send('Invalid Username (All servers)')
             return
-
-
-
-    user_instance = PlayerStats(user_id, parsed_server, sent_user_name, api_key)
-
-
-    if timeperiod:
-        timeperiod: str = timeperiod[0]
-        await ctx.send(embed=user_instance.get_tank_stats(timeperiod))
+    user_instance: PlayerStats = PlayerStats(user_id, parsed_server, sent_user_name, api_key)
+    if sent_timeperiod:
+        timeperiod: str = sent_timeperiod[0]
+        await ctx.send(embed=user_instance.get_timeperiod_stats(timeperiod))
+        return
+    if not sent_timeperiod:
+        default_embed = user_instance.get_default_stats()
+        await ctx.send(embed=default_embed)
         return
 
-    my_embed = user_instance.get_default_stats()
 
-    await ctx.send(embed=my_embed)
 
 
 @slash.slash(name='marks', description='WoT Tank MoE and Mastery',
@@ -300,28 +256,18 @@ async def _stats(ctx: SlashContext, *args):
 async def _marks(ctx: SlashContext, tank, server='na'):
     await ctx.respond()
     if tank:
-
-        server = server
-
         if server == 'na':
-            user_server = 'com'
+            api_domain_server: str = 'com'
         else:
-            user_server = server
-
-        name_str = tank.upper()
-
-        tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(user_server,
-                                                                                            tank_data.na_image_and_tank_info,
-                                                                                            tank_data.eu_image_and_tank_info,
-                                                                                            tank_data.asia_image_and_tank_info)
-        tank_guess = process.extractOne(str(name_str), list(short_and_long_list))
-
-        if tank_guess[0] in short_tank_list:
-            formatted_tank_guess = short_to_long_dict[tank_guess[0]]
-        else:
-            formatted_tank_guess = tank_guess[0]
+            api_domain_server = server
+        sent_tank_name: str = tank.upper()
+        tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(api_domain_server, TankData.na_image_and_tank_info, TankData.eu_image_and_tank_info, TankData.asia_image_and_tank_info)
+        tank_guess: List[str, int] = process.extractOne(sent_tank_name, list(short_and_long_list))
+        tank_name: str = tank_guess[0]
+        if tank_name in short_tank_list:
+            tank_name = short_to_long_dict[tank_name]
         try:
-            user_tank = tank_data_formatter(formatted_tank_guess, server=user_server)
+            user_tank = TankDataFormatter(tank_name, server=api_domain_server)
         except Exception:
             await ctx.send('Invalid Tank Name')
             return
@@ -358,9 +304,7 @@ async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):
         except Exception:
             await ctx.send('Invalid Username (All servers)')
             return
-
     try:
-
         user_instance = PlayerStats(user_id, parsed_server, sent_user_name, api_key)
     except requests.exceptions.Timeout:
         await ctx.send('api timeout: invalid user?')
@@ -368,8 +312,6 @@ async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):
     except Exception:
         await ctx.send('I have no idea what broke')
     await ctx.send(embed=user_instance.get_main_ranking())
-
-
 
 
 client.run(TOKEN)
