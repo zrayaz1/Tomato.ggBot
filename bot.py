@@ -12,7 +12,7 @@ server_list = ['na', 'eu', 'asia']
 timeperiod_list = ['24h', '7days', '30days', '60days', '1000battles']
 TOKEN = os.environ.get('TOKEN')
 # localTOKEN = os.environ.get('LOCAL_TOKEN')
-client = commands.Bot(command_prefix='$',activity=discord.Game(name='test'))
+client = commands.Bot(command_prefix='$',activity=discord.Game(name='/'))
 slash = SlashCommand(client, sync_commands=True)
 guild_ids = [719707418833190995]
 
