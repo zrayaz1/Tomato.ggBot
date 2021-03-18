@@ -18,9 +18,9 @@ slash = SlashCommand(client, sync_commands=True)
 class TankDataFormatter:
     def __init__(self, sent_tank, server="com"):
         server_to_data: Dict[str, List[dict]] = {
-            'com': [TankData.na_image_and_tank_info, TankData.na_moe_data, TankData.na_mastery_data],
-            'eu': [TankData.eu_image_and_tank_info, TankData.eu_moe_data, TankData.eu_mastery_data],
-            'asia': [TankData.asia_image_and_tank_info, TankData.asia_moe_data, TankData.asia_mastery_data]}
+            'com': [tank_data.na_image_and_tank_info, tank_data.na_moe_data, tank_data.na_mastery_data],
+            'eu': [tank_data.eu_image_and_tank_info, tank_data.eu_moe_data, tank_data.eu_mastery_data],
+            'asia': [tank_data.asia_image_and_tank_info, tank_data.asia_moe_data, tank_data.asia_mastery_data]}
         self.tank = sent_tank
         self.server = server
         self.data = server_to_data[self.server]
@@ -261,7 +261,7 @@ async def _marks(ctx: SlashContext, tank, server='na'):
         else:
             api_domain_server = server
         sent_tank_name: str = tank.upper()
-        tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(api_domain_server, TankData.na_image_and_tank_info, TankData.eu_image_and_tank_info, TankData.asia_image_and_tank_info)
+        tank_list, short_tank_list, short_and_long_list, short_to_long_dict = get_tank_list(api_domain_server, tank_data.na_image_and_tank_info, tank_data.eu_image_and_tank_info, tank_data.asia_image_and_tank_info)
         tank_guess: List[str, int] = process.extractOne(sent_tank_name, list(short_and_long_list))
         tank_name: str = tank_guess[0]
         if tank_name in short_tank_list:
