@@ -216,7 +216,7 @@ async def on_ready():
              )
 async def _stats(ctx: SlashContext, *args):
     await ctx.respond()
-    time.time()
+    start = time.time()
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
     sent_servers: List[str] = [i for i in args if i in server_list]
     sent_user_name: str = args[0]
