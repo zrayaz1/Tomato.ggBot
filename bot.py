@@ -9,6 +9,7 @@ import asyncio
 from typing import Dict, List
 from bot_functions import TankData, get_tank_list, get_wn8_color, get_short_hand, find_server, format_slash_choices
 import os
+import time
 tank_data = TankData()
 
 
@@ -215,6 +216,7 @@ async def on_ready():
              )
 async def _stats(ctx: SlashContext, *args):
     await ctx.respond()
+    time.time()
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
     sent_servers: List[str] = [i for i in args if i in server_list]
     sent_user_name: str = args[0]
@@ -242,10 +244,14 @@ async def _stats(ctx: SlashContext, *args):
     if sent_timeperiod:
         timeperiod: str = sent_timeperiod[0]
         await ctx.send(embed=user_instance.get_timeperiod_stats(timeperiod))
+        end = time.time()
+        print(end-start)
         return
     if not sent_timeperiod:
         default_embed = user_instance.get_default_stats()
         await ctx.send(embed=default_embed)
+        end = time.time()
+        print(end-start)
         return
 
 
