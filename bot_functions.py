@@ -1,31 +1,39 @@
-import requests
 import aiohttp
-from typing import Tuple, List
+from typing import Tuple, List, Union
+import asyncio
 
 
+async def fetch(session, url):
+    async with session.get(url) as response:
+        json_response = await response.json()
+        return json_response
 class TankData:
     def __init__(self):
+        self.tomato_api_url = "https://tomatobackend.herokuapp.com/api/{}/{}"
+
         self.tank_info_api_url = "https://api.worldoftanks.{}/wot/encyclopedia/vehicles/?application_id=20e1e0e4254d98635796fc71f2dfe741&fields=name%2Cimages%2Cshort_name%2Ctier"
         self.na_image_and_tank_info, self.eu_image_and_tank_info, self.asia_image_and_tank_info = {}, {}, {}
         self.na_moe_data, self.eu_moe_data, self.asia_moe_data, self.na_mastery_data, self.eu_mastery_data, self.asia_mastery_data = {}, {}, {}, {}, {}, {}
-        self.update_vehicles_data()
-        self.update_mark_data()
+    async def update_vehicles_data(self):
+        async with aiohttp.ClientSession() as session:
+            tasks = [fetch(session, self.tank_info_api_url.format(i)) for i in ['com','eu','asia']] + [fetch(session, self.tomato_api_url.format(i, j)) for i, j in [('moe','com'),('moe','eu'),('moe','asia'),('mastery','com'),('mastery','eu'),('mastery','asia')]]
+            output = await asyncio.gather(*tasks)
+            self.na_image_and_tank_info = output[0]
+            self.eu_image_and_tank_info = output[1]
+            self.asia_image_and_tank_info = output[2]
+            self.na_moe_data = output[3]
+            self.eu_moe_data = output[4]
+            self.asia_moe_data = output[5]
+            self.na_mastery_data = output[6]
+            self.eu_mastery_data = output[7]
+            self.asia_mastery_data = output[8]
+            for x in self.na_image_and_tank_info, self.eu_image_and_tank_info, self.asia_image_and_tank_info:
+                print(x['status'])
+            for x in self.na_moe_data, self.eu_moe_data, self.asia_moe_data, self.na_mastery_data, self.eu_mastery_data, self.asia_mastery_data:
+                print(x[0]['id'])
 
-    def update_vehicles_data(self):
-        self.na_image_and_tank_info = requests.get(self.tank_info_api_url.format('com')).json()
-        self.eu_image_and_tank_info = requests.get(self.tank_info_api_url.format('eu')).json()
-        self.asia_image_and_tank_info = requests.get(self.tank_info_api_url.format('asia')).json()
 
-    def update_mark_data(self):
-        self.na_moe_data = requests.get("https://gunmarks.poliroid.ru/api/com/vehicles/65,85,95,100").json()
-        self.eu_moe_data = requests.get("https://gunmarks.poliroid.ru/api/eu/vehicles/65,85,95,100").json()
-        self.asia_moe_data = requests.get("https://gunmarks.poliroid.ru/api/asia/vehicles/65,85,95,100").json()
-        self.na_mastery_data = requests.get("https://mastery.poliroid.ru/api/com/vehicles").json()
-        self.eu_mastery_data = requests.get("https://mastery.poliroid.ru/api/eu/vehicles").json()
-        self.asia_mastery_data = requests.get("https://mastery.poliroid.ru/api/asia/vehicles").json()
-
-
-def format_slash_choices(choices_input: list) -> List[dict]:
+def format_slash_choices(choices_input: Union[list,tuple]) -> List[dict]:
     dicts = []
     for item in choices_input:
         formatted = {'name': item.lower(), 'value': item.lower()}
@@ -116,3 +124,4 @@ async def find_server(username: str, api_url: str, api_key: str) -> Tuple[int, s
                 if search_asia['status'] != "error" and search_asia['meta']['count'] != 0:
                     stats_user_id = search_asia['data'][0]['account_id']
                     return stats_user_id, 'asia'
+
