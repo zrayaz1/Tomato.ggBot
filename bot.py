@@ -4,19 +4,18 @@ from discord.ext import commands
 from fuzzywuzzy import process
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils import manage_commands
-import requests
-import asyncio
-from typing import Dict, List
+import time
+import aiohttp
+from typing import Dict, List, Union
 from bot_functions import TankData, get_tank_list, get_wn8_color, get_short_hand, find_server, format_slash_choices
 import os
-import time
-tank_data = TankData()
 
+tank_data = TankData()
 
 server_list = ('na', 'eu', 'asia')
 timeperiod_list = ('24h', '7days', '30days', '60days', '1000battles')
 TOKEN = os.environ.get('TOKEN')
-client = commands.Bot(command_prefix='$', activity=discord.Game(name='test'))
+client = commands.Bot(command_prefix='$', activity=discord.Game(name='/'))
 client.loop.create_task(tank_data.update_vehicles_data())
 slash = SlashCommand(client, sync_commands=True)
 WOT_API_KEY = '20e1e0e4254d98635796fc71f2dfe741'
@@ -60,11 +59,9 @@ class TankDataFormatter:
 
 
 class PlayerStats:
-    def __init__(self, user_id: str, server: str, name: str, wot_api_key: str):
-        if server == 'com':
-            self.time_out_duration = 8
-        else:
-            self.time_out_duration = 120
+    def __init__(self, user_id: str, server: str, name: str, wot_api_key: str, cached='true'):
+        tomato_player_api_url = 'https://tomatobackend.herokuapp.com/api/player/{}/{}'
+        self.is_cached = cached
         self.clan_api_url = f'https://api.worldoftanks.{server}/wot/clans/accountinfo/?application_id={wot_api_key}&account_id={user_id}'
         self.wot_api_key = wot_api_key
         self.url_domain = server
@@ -73,10 +70,15 @@ class PlayerStats:
         else:
             self.server = self.url_domain
         self.user_name = name
-        tomato_player_api_url = 'https://tomatobackend.herokuapp.com/api/player/{}/{}'
+
         self.user_id = user_id
-        self.user_url = tomato_player_api_url.format(server, user_id)
-        self.tomato_api_json = requests.get(self.user_url, timeout=self.time_out_duration).json()
+        self.user_url = tomato_player_api_url.format(server, f"{self.user_id}?cache={str(self.is_cached)}")
+
+    async def get_default_stats(self,generate_embed=True) -> Union[Embed, None]:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.user_url) as search:
+                self.tomato_api_json = await search.json()
+        self.clan_data = self.tomato_api_json['clanData']
         self.overall_stats = self.tomato_api_json['overallStats']
         self.tank_wn8 = self.overall_stats['tankWN8']
         self.recent_24hr = self.tomato_api_json['recents']['recent24hr']
@@ -88,60 +90,80 @@ class PlayerStats:
         self.overall_wn8: int = self.overall_stats['overallWN8']
         self.total_battles: int = self.tomato_api_json["overall"]['battles']
         self.total_wins: int = self.tomato_api_json["overall"]['wins']
-        self.clan_data = requests.get(self.clan_api_url).json()['data']
-        if self.clan_data[str(self.user_id)] is None:
-            self.isInClan: bool = False
+        if self.clan_data is None:
+            self.isInClan = False
         else:
             self.isInClan = True
-            self.clan_name: str = self.clan_data[str(self.user_id)]['clan']['tag']
-            self.clanIconUrl: str = self.clan_data[str(self.user_id)]['clan']['emblems']['x64']['portal']
-            self.clanPosition: str = self.clan_data[str(self.user_id)]['role']
+            self.clan_name: str = self.clan_data['clan']['tag']
+            self.clanIconUrl: str = self.clan_data['clan']['emblems']['x64']['portal']
+            self.clanPosition: str = self.clan_data['role']
             self.shortClanPosition: str = get_short_hand(self.clanPosition)
+        if generate_embed:
+            dataList = {"overall": self.overall_stats, "24h": self.recent_24hr, "7 days": self.recent_7days,
+                        '30 days': self.recent_30days, '60 Days': self.recent_60days, '1000 Battles': self.recent_1000}
+            if self.isInClan:
+                if self.is_cached == 'true':
 
-    def get_default_stats(self) -> Embed:
-
-        dataList = {"overall": self.overall_stats, "24h": self.recent_24hr, "7 days": self.recent_7days,
-                    '30 days': self.recent_30days, '60 Days': self.recent_60days, '1000 Battles': self.recent_1000}
-        if self.isInClan:
-            default_stats_embed = Embed(title=f"{self.user_name.capitalize()}'s Stats",
-                                        description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clan_name}]" + "**",
-                                        color=get_wn8_color(self.overall_wn8),
-                                        url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
-            default_stats_embed.set_thumbnail(url=self.clanIconUrl)
-
-        else:
-            default_stats_embed = Embed(title=f"{self.user_name.capitalize()}'s Stats",
-                                        colour=get_wn8_color(self.overall_wn8),
-                                        url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
-
-        for time_period in list(dataList.keys()):
-            values = list(dict(list(dataList[time_period].items())[0:4]).values())
-            if time_period == 'overall':
-
-                winrate = int(self.total_wins) / int(self.total_battles)
-                winRatePercent = "{:.1%}".format(winrate)
-                default_stats_embed.add_field(name=f"**{time_period}**",
-                                              value=f'Battles: `{values[0]}`\nWN8: `{values[1]}`\nWinRate: `{winRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`',
-                                              inline=True)
-            else:
-                recentBattles = int(values[0])
-                recentsWins = dataList[time_period]['wins']
-                if recentBattles != 0:
-                    recentWinRate = recentsWins / recentBattles
-                    recentWinRatePercent = "{:.1%}".format(recentWinRate)
-
+                    default_stats_embed = Embed(title=f"{self.user_name.capitalize()}'s Stats **CACHED**",
+                                                description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clan_name}]" + "**",
+                                                color=get_wn8_color(self.overall_wn8),
+                                                url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
+                elif self.is_cached == 'false':
+                    default_stats_embed = Embed(
+                        title=f"{self.user_name.capitalize()}'s Stats",
+                        description="**" + self.shortClanPosition + ' ' + "at" + " " f"[{self.clan_name}]" + "**",
+                        color=get_wn8_color(self.overall_wn8),
+                        url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
                 else:
-                    recentWinRatePercent = '-'
-                default_stats_embed.add_field(name=time_period,
-                                              value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
-        default_stats_embed.set_footer(text='Powered by Tomato.gg',
-                                       icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
+                    raise Exception
+                default_stats_embed.set_thumbnail(url=self.clanIconUrl)
 
-        return default_stats_embed
+            else:
+                default_stats_embed = Embed(title=f"{self.user_name.capitalize()}'s Stats ***Cached={self.is_cached}***",
+                                            colour=get_wn8_color(self.overall_wn8),
+                                            url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
 
-    def get_timeperiod_stats(self, period: str) -> Embed:
+            for time_period in list(dataList.keys()):
+                if time_period == 'overall':
+                    battles = dataList[time_period]['battles']
+                    wn8 = dataList[time_period]["overallWN8"]
+                    AvgTier = dataList[time_period]['avgTier']
+                    if AvgTier != '-' and AvgTier != 0:
+                        AvgTier = str(AvgTier)[0:3]
+
+                    winrate = int(self.total_wins) / int(self.total_battles)
+                    winRatePercent = "{:.1%}".format(winrate)
+                    default_stats_embed.add_field(name=f"**{time_period}**",
+                                                  value=f'Battles: `{battles}`\nWN8: `{wn8}`\nWinRate: `{winRatePercent}`\nAvgTier: `{AvgTier}`',
+                                                  inline=True)
+                else:
+                    battles = dataList[time_period]['battles']
+                    wn8 = dataList[time_period]["overallWN8"]
+                    AvgTier = dataList[time_period]['tier']
+                    if AvgTier != '-' and AvgTier != 0:
+                        AvgTier = str(AvgTier)[0:2]
+                    if battles == '-':
+                        recentBattles = 0
+                    else:
+                        recentBattles = int(float(battles))
+                    recentsWins = dataList[time_period]['wins']
+                    if recentBattles != 0:
+                        recentWinRate = recentsWins / recentBattles
+                        recentWinRatePercent = "{:.1%}".format(recentWinRate)
+
+                    else:
+                        recentWinRatePercent = '-'
+                    default_stats_embed.add_field(name=time_period,
+                                                  value=f'Battles: `{battles}`\nWN8: `{wn8}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{AvgTier}`')
+            default_stats_embed.set_footer(text='Powered by Tomato.gg',
+                                           icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
+
+            return default_stats_embed
+        else:
+            return
+    async def get_timeperiod_stats(self, period: str) -> Embed:
         all_periods_data = {"OVERALL": self.overall_stats, "24H": self.recent_24hr, "7DAYS": self.recent_7days,
-                     '30DAYS': self.recent_30days, '60DAYS': self.recent_60days, '1000BATTLES': self.recent_1000}
+                            '30DAYS': self.recent_30days, '60DAYS': self.recent_60days, '1000BATTLES': self.recent_1000}
 
         period_data = all_periods_data[period.upper()]
 
@@ -149,52 +171,78 @@ class PlayerStats:
 
         top_x_tanks = sorted_tank_data[0:5]
         try:
-            tankEmbed = Embed(title=f"{self.user_name.capitalize()}'s Stats",
-                              description=f"**Last {period} Stats**",
-                              color=get_wn8_color(period_data['overallWN8']),
-                              url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
+            if self.is_cached == 'true':
+                tankEmbed = Embed(title=f"{self.user_name.capitalize()}'s Stats **CACHED**",
+                                  description=f"**Last {period} Stats**",
+                                  color=get_wn8_color(period_data['overallWN8']),
+                                  url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
+            elif self.is_cached == 'false':
+                tankEmbed = Embed(title=f"{self.user_name.capitalize()}'s Stats",
+                                  description=f"**Last {period} Stats**",
+                                  color=get_wn8_color(period_data['overallWN8']),
+                                  url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
+            else:
+                raise Exception
+
         except Exception:
             return Embed(title='Invalid Name')
-        values: List = list(dict(list(period_data.items())[0:4]).values())
-        recentBattles: int = int(values[0])
-        recentsWins = all_periods_data[period.upper()]['wins']
+        recentBattles: int = int(period_data['battles'])
+        recentsWins = period_data['wins']
         recentWinRate = recentsWins / recentBattles
         recentWinRatePercent = "{:.1%}".format(recentWinRate)
         tankEmbed.add_field(name='Totals',
-                            value=f'Battles: `{values[0]}`\nWN8: `{values[3]}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{str(values[2])[0:3]}`')
+                            value=f"Battles: `{period_data['battles']}`\nWN8: `{period_data['overallWN8']}`\nWinRate: `{recentWinRatePercent}`\nAvgTier: `{period_data['tier'][0:3]}`")
         for tank in top_x_tanks:
             tankEmbed.add_field(name=tank['name'],
                                 value=f"Battles: `{tank['battles']}`\nWinRate: `{tank['winrate']}`\nWN8: `{tank['wn8']}`\nDPG: `{tank['dpg']}`")
         return tankEmbed
 
-    def get_main_ranking(self) -> Embed:
+    async def get_main_ranking(self) -> Embed:
         main_ranking_api_url = "https://tomatobackend.herokuapp.com/api/hofmain/{}/{}".format(self.url_domain,
                                                                                               self.user_id)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(main_ranking_api_url) as search:
+                self.ranking_data = await search.json()
 
-        self.ranking_data = requests.get(main_ranking_api_url).json()
-        self.ranking_color = get_wn8_color(int(self.ranking_data['top']['wn8']['value']))
-        if self.isInClan:
-            main_ranking_embed = Embed(
-                title=f"{self.user_name.capitalize()}'s Ranking ",
-                description=f"**{self.shortClanPosition} at [{self.clan_name.upper()}]**", colour=self.ranking_color,
-                url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}?page=hall-of-fame')
-            main_ranking_embed.set_thumbnail(url=self.clanIconUrl)
-        else:
-            main_ranking_embed = Embed(title=f"{self.user_name.capitalize()}'s Ranking ", colour=self.ranking_color,
-                                       url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}?page=hall-of-fame')
-        for section in self.ranking_data['top']:
+                self.ranking_color = get_wn8_color(int(self.ranking_data['top']['wn8']['value']))
+                if self.isInClan:
+                    if self.is_cached == 'false':
+                        main_ranking_embed = Embed(
+                            title=f"{self.user_name.capitalize()}'s Ranking",
+                            description=f"**{self.shortClanPosition} at [{self.clan_name.upper()}]**",
+                            colour=self.ranking_color,
+                            url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}?page=hall-of-fame')
+                        main_ranking_embed.set_thumbnail(url=self.clanIconUrl)
+                    elif self.is_cached == 'true':
+                        main_ranking_embed = Embed(
+                            title=f"{self.user_name.capitalize()}'s Ranking **CACHED**",
+                            description=f"**{self.shortClanPosition} at [{self.clan_name.upper()}]**",
+                            colour=self.ranking_color,
+                            url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}?page=hall-of-fame')
+                        main_ranking_embed.set_thumbnail(url=self.clanIconUrl)
 
-            if section not in ['total', 'battles', 'dmg_ratio']:
-                main_ranking_embed.add_field(name=f"{section.upper()}",
-                                             value=f"Rank: `{self.ranking_data['top'][section]['ranking']}`\n{section}: `{self.ranking_data['top'][section]['value']}`")
-            if section == 'dmg_ratio':
-                main_ranking_embed.add_field(name=f"DMG RATIO",
-                                             value=f"Rank: `{self.ranking_data['top'][section]['ranking']}`\nratio: `{self.ranking_data['top'][section]['value']}`")
+                else:
+                    if self.is_cached == 'false':
+                        main_ranking_embed = Embed(title=f"{self.user_name.capitalize()}'s Ranking",
+                                                   colour=self.ranking_color,
+                                                   url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}?page=hall-of-fame')
+                    elif self.is_cached == 'true':
+                        main_ranking_embed = Embed(title=f"{self.user_name.capitalize()}'s Ranking **CACHED**",
+                                                   colour=self.ranking_color,
+                                                   url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}?page=hall-of-fame')
+                for section in self.ranking_data['top']:
 
-        main_ranking_embed.set_footer(text='Powered by Tomato.gg || 60 days | 75 battles min | tier 6+',
-                                      icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
+                    if section not in ['total', 'battles', 'dmg_ratio']:
+                        main_ranking_embed.add_field(name=f"{section.upper()}",
+                                                     value=f"Rank: `{self.ranking_data['top'][section]['ranking']}`\n{section}: `{self.ranking_data['top'][section]['value']}`")
+                    if section == 'dmg_ratio':
+                        main_ranking_embed.add_field(name=f"DMG RATIO",
+                                                     value=f"Rank: `{self.ranking_data['top'][section]['ranking']}`\nratio: `{self.ranking_data['top'][section]['value']}`")
 
-        return main_ranking_embed
+                main_ranking_embed.set_footer(text='Powered by Tomato.gg || 60 days | 75 battles min | tier 6+',
+                                              icon_url='https://www.tomato.gg/static/media/smalllogo.70f212e0.png')
+
+                return main_ranking_embed
 
 
 @client.event
@@ -227,7 +275,9 @@ async def _stats(ctx: SlashContext, *args):
             parsed_server: str = 'com'
         else:
             parsed_server = server
-        search_for_id_json = requests.get(api_url.format(parsed_server, WOT_API_KEY, sent_user_name)).json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url.format(parsed_server, WOT_API_KEY, sent_user_name)) as search:
+                search_for_id_json = await search.json()
         if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
             await ctx.send('Missing api data: Invalid username?')
             return
@@ -240,18 +290,30 @@ async def _stats(ctx: SlashContext, *args):
         except Exception:
             await ctx.send('Invalid Username (All servers)')
             return
-    user_instance: PlayerStats = PlayerStats(user_id, parsed_server, sent_user_name, WOT_API_KEY)
+    user_instance_cached = PlayerStats(f"{user_id}", parsed_server, sent_user_name, WOT_API_KEY, cached='true')
+
     if sent_timeperiod:
+        await user_instance_cached.get_default_stats(generate_embed=False)
         timeperiod: str = sent_timeperiod[0]
-        await ctx.send(embed=user_instance.get_timeperiod_stats(timeperiod))
+        message = await ctx.send(embed=await user_instance_cached.get_timeperiod_stats(timeperiod))
         end = time.time()
-        print(end-start)
+        print(end - start)
+        user_instance: PlayerStats = PlayerStats(f"{user_id}", parsed_server, sent_user_name, WOT_API_KEY,
+                                                 cached='false')
+        await user_instance.get_default_stats(generate_embed=False)
+        await message.edit(embed=await user_instance.get_timeperiod_stats(timeperiod))
+
         return
     if not sent_timeperiod:
-        default_embed = user_instance.get_default_stats()
-        await ctx.send(embed=default_embed)
+        message = await ctx.send(embed=await user_instance_cached.get_default_stats())
         end = time.time()
-        print(end-start)
+        print(end - start)
+        user_instance: PlayerStats = PlayerStats(f"{user_id}", parsed_server, sent_user_name, WOT_API_KEY,
+                                                 cached='false')
+        await message.edit(embed=await user_instance.get_default_stats())
+        x = time.time() - start
+        print(f"full:{x}")
+
         return
 
 
@@ -303,7 +365,9 @@ async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):
             parsed_server = 'com'
         else:
             parsed_server = sent_server
-        search_for_id_json = requests.get(api_url.format(parsed_server, WOT_API_KEY, sent_user_name)).json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url.format(parsed_server, WOT_API_KEY, sent_user_name)) as search:
+                search_for_id_json = await search.json()
         if search_for_id_json['status'] == "error" or search_for_id_json['meta']['count'] == 0:
             await ctx.send('Missing api data: Invalid username?')
             return
@@ -316,13 +380,17 @@ async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):
         except Exception:
             await ctx.send('Invalid Username (All servers)')
             return
-    try:
-        user_instance = PlayerStats(user_id, parsed_server, sent_user_name, WOT_API_KEY)
-    except requests.exceptions.Timeout:
-        await ctx.send('api timeout: invalid user?')
-        return
-    except Exception:
-        await ctx.send('I have no idea what broke')
-    await ctx.send(embed=user_instance.get_main_ranking())
+
+    cached_user_instance = PlayerStats(user_id, parsed_server, sent_user_name, WOT_API_KEY, 'true')
+
+    await cached_user_instance.get_default_stats(generate_embed=False)
+    message = await ctx.send(embed=await cached_user_instance.get_main_ranking())
+    user_instance = PlayerStats(user_id, parsed_server, sent_user_name, WOT_API_KEY, 'false')
+    await user_instance.get_default_stats()
+    await message.edit(embed=await user_instance.get_main_ranking())
+
+
+
+
 
 client.run(TOKEN)
