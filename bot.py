@@ -149,7 +149,7 @@ class PlayerStats:
                     wn8 = dataList[time_period]["overallWN8"]
                     AvgTier = dataList[time_period]['tier']
                     if AvgTier != '-' and AvgTier != 0:
-                        AvgTier = str(AvgTier)[0:2]
+                        AvgTier = str(AvgTier)[0:3]
                     if battles == '-':
                         recentBattles = 0
                     else:
