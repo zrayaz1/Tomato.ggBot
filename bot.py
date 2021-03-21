@@ -119,9 +119,17 @@ class PlayerStats:
                 default_stats_embed.set_thumbnail(url=self.clanIconUrl)
 
             else:
-                default_stats_embed = Embed(title=f"{self.user_name.capitalize()}'s Stats ***Cached={self.is_cached}***",
-                                            colour=get_wn8_color(self.overall_wn8),
-                                            url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
+                if self.is_cached == 'true':
+
+                    default_stats_embed = Embed(title=f"{self.user_name.capitalize()}'s Stats **CACHED**",
+
+                                                color=get_wn8_color(self.overall_wn8),
+                                                url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
+                elif self.is_cached == 'false':
+                    default_stats_embed = Embed(
+                        title=f"{self.user_name.capitalize()}'s Stats",
+                        color=get_wn8_color(self.overall_wn8),
+                        url=f'http://tomato.gg/stats/{self.server}/{self.user_name}={self.user_id}')
 
             for time_period in list(dataList.keys()):
                 if time_period == 'overall':
