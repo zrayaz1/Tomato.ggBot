@@ -271,7 +271,6 @@ async def on_ready():
                                                     required=False)]
              )
 async def _stats(ctx: SlashContext, *args):
-    await ctx.respond()
     start = time.time()
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
     sent_servers: List[str] = [i for i in args if i in server_list]
@@ -333,7 +332,6 @@ async def _stats(ctx: SlashContext, *args):
                                                required=False)]
              )
 async def _marks(ctx: SlashContext, tank, server='na'):
-    await ctx.respond()
     if tank:
         if server == 'na':
             api_domain_server: str = 'com'
@@ -365,7 +363,6 @@ async def _marks(ctx: SlashContext, tank, server='na'):
                                   option_type=3, required=False),
 ])
 async def _ranks(ctx: SlashContext, sent_user_name, sent_server=""):
-    await ctx.respond()
     api_url = 'https://api.worldoftanks.{}/wot/account/list/?language=en&application_id={}&search={}'
     if sent_server:
 
