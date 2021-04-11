@@ -2,4 +2,5 @@ requests
 git+https://github.com/Rapptz/discord.py
 fuzzywuzzy
 python-Levenshtein
-discord-py-slash-command
+discord-py-slash-command==1.0.9.5
+
