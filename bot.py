@@ -91,8 +91,8 @@ class PlayerStats:
                 self.recent_60days = self.tomato_api_json['recents']['recent60days']
                 self.recent_1000 = self.tomato_api_json['recents']['recent1000']
                 self.overall_wn8: int = self.overall_stats['overallWN8']
-                self.total_battles: int = self.tomato_api_json["overall"]['battles']
-                self.total_wins: int = self.tomato_api_json["overall"]['wins']
+                self.total_battles: int = self.tomato_api_json["overallStats"]['battles']
+                self.total_wins: int = self.tomato_api_json["summary"]['statistics']['all']['wins']
                 if self.clan_data is None:
                     self.isInClan = False
                 else:
