@@ -1,4 +1,3 @@
-
 import aiohttp
 from typing import Tuple, List, Union
 import asyncio
@@ -126,3 +125,13 @@ async def find_server(username: str, api_url: str, api_key: str) -> Tuple[int, s
                     stats_user_id = search_asia['data'][0]['account_id']
                     return stats_user_id, 'asia'
 
+async def get_clan_stats(server,clan_id) -> Tuple:
+    clan_url_stronghold = "https://api.worldoftanks.{}/wot/stronghold/claninfo/?application_id=4a07de52c30503b07af4bc6714dd7a7b&clan_id={}"
+    clan_url_globalmap = "https://api.worldoftanks.{}/wot/globalmap/claninfo/?application_id=4a07de52c30503b07af4bc6714dd7a7b&clan_id={}"
+    clan_url_clanratings = "https://api.worldoftanks.{}/wot/clanratings/clans/?application_id=4a07de52c30503b07af4bc6714dd7a7b&clan_id={}"
+    tomato_url_clan = "https://tomatobackend.herokuapp.com/api/clan/{}/{}"
+    clan_data_urls = [clan_url_stronghold, clan_url_globalmap, clan_url_clanratings, tomato_url_clan]
+    async with aiohttp.ClientSession() as session:
+        tasks = [fetch(session,i.format(server,clan_id)) for i in clan_data_urls]
+        output = await asyncio.gather(*tasks)
+        return output

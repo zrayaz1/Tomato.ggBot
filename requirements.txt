@@ -1,6 +1,6 @@
 requests
-discord.py==1.6.0
+discord.py
 fuzzywuzzy
 python-Levenshtein
-discord-py-slash-command==1.0.9.5
+discord-py-slash-command
 
