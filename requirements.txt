@@ -1,6 +1,0 @@
-requests
-discord.py
-fuzzywuzzy
-python-Levenshtein
-discord-py-slash-command==2.4.0
-
